@@ -7,6 +7,7 @@ import argparse, datetime, hashlib, html, json, os, re, sys, tempfile
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import quote, unquote, urlsplit
+import privacy
 
 def digest(s):
     return hashlib.sha256(s.encode()).hexdigest()
@@ -116,6 +117,7 @@ def track_value(cut, song, page, mount, root, pages, project):
 
 def migrate(specfile, only=None):
     spec=json.loads(Path(specfile).read_text());content=Path(spec['content']);root=Path(spec['root']);mount=spec.get('mount','channel');pages=spec['projects']
+    policy=privacy.load(spec.get('privacy'))
     report={'created':0,'updated':0,'unchanged':0,'conflicts':[],'projects':[]}
     for project in pages:
         if only and project['id']!=only:continue
@@ -128,18 +130,18 @@ def migrate(specfile, only=None):
             if parsed.cut:song.update({k:parsed.cut[k] for k in ['chapters','lines'] if k in parsed.cut});song['duration']=parsed.cut.get('songEnd')
             config['song']=song
         # Project settings are authored after first import; never overwrite them on a rescan.
-        if not (folder/'project.json').exists():atomic(folder/'project.json',config)
+        if not (folder/'project.json').exists():atomic(folder/'project.json',privacy.clean(config,policy))
         seen=set()
         for order,(a,b,attrs) in enumerate(parsed.sections):
             ident=attrs.get('id',f'section-{order+1}')
             if ident in seen:report['conflicts'].append(f'{project["id"]}: duplicate ID {ident}');continue
             if not re.fullmatch(r'[a-z0-9][a-z0-9_-]{0,119}',ident):report['conflicts'].append(f'Unsupported ID: {ident}');continue
             seen.add(ident)
-            value=section_value(raw[a:b],ident,order,page,mount,root,pages,fallback)
+            value=privacy.clean(section_value(raw[a:b],ident,order,page,mount,root,pages,fallback),policy)
             try:report[put(folder/'entries'/f'{ident}.json',value,digest('schema-2:'+raw[a:b]),f'{project["id"]}#{ident}')]+=1
             except ValueError as e:report['conflicts'].append(str(e))
         if parsed.cut and parsed.cut.get('src'):
-            track=track_value(parsed.cut,parsed.song,page,mount,root,pages,project)
+            track=privacy.clean(track_value(parsed.cut,parsed.song,page,mount,root,pages,project),policy)
             try:report[put(folder/'current.json',track,digest(json.dumps(parsed.cut,sort_keys=True)),f'{project["id"]}#cut')]+=1
             except ValueError as e:report['conflicts'].append(str(e))
         report['projects'].append({'id':project['id'],'sections':len(parsed.sections),'imported':len(seen)})

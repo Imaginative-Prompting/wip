@@ -5,6 +5,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { appRoot, catalog, hash, inside } from "./store.mjs";
 
+import { mediaRefs } from "./privacy.mjs";
+
 const types = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript",
@@ -46,6 +48,7 @@ export async function start(c, requestedPort) {
   let data = await catalog(c),
     signature = hash(data),
     timer;
+  let allowedMedia = new Set(mediaRefs(data));
   const clients = new Set();
   const refresh = async () => {
     try {
@@ -53,6 +56,7 @@ export async function start(c, requestedPort) {
         sig = hash(next);
       if (sig !== signature) {
         data = next;
+        allowedMedia = new Set(mediaRefs(next));
         signature = sig;
         for (const r of clients) r.write(`event: change\ndata: ${sig}\n\n`);
       }
@@ -111,6 +115,10 @@ export async function start(c, requestedPort) {
       }
       let file;
       if (pathname.startsWith("/media/")) {
+        if (!allowedMedia.has(pathname)) {
+          res.writeHead(404).end("Not found");
+          return;
+        }
         const parts = pathname.slice(7).split("/"),
           mount = c.mounts[parts.shift()];
         if (!mount) {
@@ -198,7 +206,12 @@ export async function start(c, requestedPort) {
     for (const r of clients) r.end();
   });
   await new Promise((resolve, reject) => {
-    server.once("error", reject);
+    server.once("error", (error) => {
+      watcher.close();
+      clearInterval(heartbeat);
+      clearTimeout(timer);
+      reject(error);
+    });
     server.listen(requestedPort ?? c.port ?? 7353, "127.0.0.1", resolve);
   });
   console.log(`WIP · http://127.0.0.1:${server.address().port}`);

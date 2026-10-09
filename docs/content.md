@@ -35,3 +35,18 @@ Imported entries carry a `legacy` fingerprint. The importer skips identical
 source sections and rejects changes if a native writer has changed that entry.
 Use the CLI for future edits; it replaces the legacy fingerprint with your native
 entry. Legacy files remain historical migration input.
+
+## Optional privacy rules
+
+Set `privacy` in `wip.json` to a workspace-local JSON file. It may contain
+`blockedMedia` (media URLs), `blockDocuments: true`, and `replacements` (objects
+with a `pattern` regular expression and `replacement` text). The CLI rejects
+unsafe new writes. The viewer scrubs excluded text and holds entries referencing
+blocked media out of its catalog, even after a direct file edit. The local media
+server serves only URLs referenced by the visible catalog.
+
+The legacy import specification accepts an absolute `privacy` path too. It removes
+blocked figures and document links before writing an entry, including on later
+reimports. Privacy rules are not exported in the public catalog. Restart the
+local server after changing a policy file. Review new media visually, including
+embedded screenshots and metadata; a text rule cannot inspect pixels.

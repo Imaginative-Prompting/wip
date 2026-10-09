@@ -3,17 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="theme-color" content="#101211" />
+    <meta name="theme-color" content="#090909" />
     <title>WIP</title>
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="app.css" />
   </head>
   <body>
     <header class="topbar">
-      <a id="home-link" class="brand" href="/" aria-label="WIP home"
-        ><span class="brand-mark">w.</span
-        ><span>WIP<span class="brand-note">ROOM TO MAKE THINGS</span></span></a
-      >
+      <a id="home-link" class="brand" href="/" aria-label="WIP home">wip</a>
       <div class="connection">
         <span id="live-dot"></span><span id="connection">Live workspace</span>
       </div>
@@ -21,7 +18,6 @@
     <main>
       <div class="heading">
         <div>
-          <p class="eyebrow">YOUR WORK, TAKING SHAPE</p>
           <h1 id="project-title">Work in progress.</h1>
           <p id="project-description" class="description"></p>
         </div>
@@ -34,11 +30,11 @@
       <section class="library" aria-label="Work in progress entries">
         <div class="search-row">
           <div class="search-wrap">
-            <span aria-hidden="true">⌕</span
+            <span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></span
             ><input
               id="search"
               type="search"
-              placeholder="Find a render, an idea, a note…"
+              placeholder="Search"
               aria-label="Search work"
             /><kbd>/</kbd>
           </div>
@@ -60,10 +56,7 @@
           <button id="clear" class="subtle">Clear filters</button>
         </div>
       </section>
-      <footer class="page-foot">
-        <span>A little less friction. A little more making.</span
-        ><span>WIP</span>
-      </footer>
+
     </main>
     <section id="preview" aria-label="Video preview" hidden>
       <video id="video" playsinline preload="metadata"></video>
@@ -79,7 +72,7 @@
       <div class="now">
         <div id="now-art" class="now-art" aria-hidden="true">♪</div>
         <div>
-          <div id="now-title">A place for your next idea.</div>
+          <div id="now-title">Nothing playing</div>
           <div id="now-subtitle">Choose something to play</div>
         </div>
       </div>

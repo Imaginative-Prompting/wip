@@ -13,6 +13,8 @@ import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
+import { checkWrite, safeCatalog } from "./privacy.mjs";
+
 export const appRoot = fileURLToPath(new URL("../", import.meta.url));
 export const hash = (value) =>
   createHash("sha256")
@@ -30,6 +32,7 @@ export async function config(file) {
   const c = await json(configFile);
   const base = path.dirname(configFile);
   c.content = path.resolve(base, c.content || "content");
+  if (c.privacy) c.privacy = path.resolve(base, c.privacy);
   c.mounts = Object.fromEntries(
     Object.entries(c.mounts || {}).map(([k, v]) => {
       if (!slug(k)) throw new Error(`Invalid media mount: ${k}`);
@@ -143,6 +146,7 @@ export function validateTrack(track) {
 }
 export async function upsert(c, project, entry, expected) {
   validateEntry(entry);
+  await checkWrite(c, entry);
   const dir = projectDir(c, project);
   await json(path.join(dir, "project.json"));
   return mutate(
@@ -156,6 +160,7 @@ export async function upsert(c, project, entry, expected) {
 }
 export async function setCurrent(c, project, track, expected) {
   validateTrack(track);
+  await checkWrite(c, track);
   await json(path.join(projectDir(c, project), "project.json"));
   return mutate(
     path.join(projectDir(c, project), "current.json"),
@@ -208,7 +213,7 @@ export async function catalog(c) {
     }
   }
   projects.sort((a, b) => (a.order || 0) - (b.order || 0));
-  return { title: c.title || "WIP", projects, errors };
+  return safeCatalog(c, { title: c.title || "WIP", projects, errors });
 }
 export async function validate(c) {
   const data = await catalog(c),

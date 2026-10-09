@@ -110,17 +110,7 @@ function renderCurrent() {
   box.hidden = !p;
   if (!p) return;
   if (!currentTrack) {
-    const t = make("div", "current-info");
-    t.append(
-      make("div", "current-label", "A work in progress"),
-      make(
-        "div",
-        "current-title",
-        p.description || "The next idea starts here.",
-      ),
-      make("div", "current-meta", "Concepts, tests, and decisions live below."),
-    );
-    box.append(t);
+    box.hidden = true;
     return;
   }
   const track = currentTrack;
@@ -134,8 +124,7 @@ function renderCurrent() {
   }
   const info = make("div", "current-info");
   info.append(
-    make("div", "current-label", p.current ? "Current cut" : "On repeat"),
-    make("div", "current-title", track.title),
+    make("div", "current-title", p.current ? "Current cut" : "Soundtrack"),
   );
   const bits = [
     track.version ? `Version ${track.version}` : null,
@@ -154,7 +143,7 @@ function renderCurrent() {
   const play = make(
     "button",
     "primary",
-    track.video ? "▶  Play current cut" : "▶  Play song",
+    track.video ? "▶  Play cut" : "▶  Play song",
   );
   play.addEventListener("click", () => loadTrack(track, !!track.video));
   box.append(art, info, play);

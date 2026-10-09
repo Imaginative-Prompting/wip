@@ -11,6 +11,7 @@ import {
   setCurrent,
   inside,
   validate,
+  catalog,
 } from "../src/store.mjs";
 import { range, start } from "../src/server.mjs";
 import { durationOf, videoPosition } from "../web/player.js";
@@ -99,9 +100,12 @@ test("server provides byte ranges and refuses write requests, private paths and 
   await writeFile(path.join(root, "media/clip.mp4"), "0123456789");
   await mkdir(path.join(root, "media/capture"));
   await writeFile(path.join(root, "media/capture/private.txt"), "private");
+  await upsert(c, "demo", { ...entry, body: "[Clip](/media/test/clip.mp4)" });
   const server = await start(c, 0);
-  t.after(() => new Promise((resolve) => server.close(resolve)));
+  t.after(() => new Promise((resolve) => { server.closeAllConnections(); server.close(resolve); }));
   const base = `http://127.0.0.1:${server.address().port}`;
+  await writeFile(path.join(root, "media/unlisted.jpg"), "private");
+  assert.equal((await fetch(base + "/media/test/unlisted.jpg")).status, 404);
   const r = await fetch(base + "/media/test/clip.mp4", {
     headers: { Range: "bytes=2-4" },
   });
@@ -116,7 +120,7 @@ test("server provides byte ranges and refuses write requests, private paths and 
   );
   assert.equal(
     (await fetch(base + "/media/test/capture/private.txt")).status,
-    403,
+    404,
   );
   assert.equal(
     (await fetch(base + "/api/catalog", { method: "POST" })).status,
@@ -143,4 +147,18 @@ test("a full cut retains its end screen and timed excerpts use explicit offsets"
   );
   assert.equal(durationOf({ audio: "/media/a.mp3" }, 238.76, 0), 238.76);
   assert.equal(videoPosition({ offset: 77.2 }, 80), 2.799999999999997);
+});
+
+
+test("privacy policy blocks unsafe writes and holds direct file edits out of the viewer", async (t) => {
+ const { c, root } = await workspace(t);
+ c.privacy = path.join(root, "privacy.json");
+ await atomic(c.privacy, { blockedMedia: ["/media/test/private.jpg"], blockDocuments: true, replacements: [{pattern:"privatebrand",replacement:"the tools"}] });
+ await assert.rejects(upsert(c,"demo",{...entry,title:"PrivateBrand reference"}),/privacy rules/);
+ await assert.rejects(upsert(c,"demo",{...entry,body:"![Photo](/media/test/private.jpg)"}),/private asset/);
+ await assert.rejects(upsert(c,"demo",{...entry,body:"[Notes](/media/test/notes.md)"}),/private asset/);
+ await atomic(path.join(root,"content/demo/entries/one.json"),{...entry,body:'<img src="/media/test/private.jpg">',format:"html"});
+ const held=await catalog(c);assert.equal(held.projects[0].entries.length,0);assert.match(held.errors[0],/privacy review/);
+ await atomic(path.join(root,"content/demo/entries/one.json"),{...entry,title:"PrivateBrand reference"});
+ assert.equal((await catalog(c)).projects[0].entries[0].title,"the tools reference");
 });
