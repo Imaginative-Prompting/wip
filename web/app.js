@@ -562,6 +562,9 @@ const tickUI = () => {
   $("show-preview").disabled = !t?.video;
   $("fullscreen").disabled = !t?.video;
   $("repeat").setAttribute("aria-pressed", String(player.repeat));
+  const repeatTip = player.repeat ? "Repeating · turn off" : "Repeat off · turn on";
+  if ($("repeat-tip").textContent !== repeatTip)
+    $("repeat-tip").textContent = repeatTip;
   $("show-preview").setAttribute("aria-pressed", String(player.preview));
   $("show-preview").setAttribute(
     "aria-label",

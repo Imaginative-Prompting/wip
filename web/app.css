@@ -130,7 +130,15 @@ kbd { font-family: inherit; color: var(--faint); font-size: 11px; }
 .icon { display: grid; place-items: center; width: 30px; height: 30px; flex: none; padding: 0; font-size: 18px; color: var(--faint); }
 .icon:hover { color: var(--ink); transform: translateY(-1px); }
 #back,#forward { font-size: 10px; font-variant-numeric: tabular-nums; }
-#repeat { font-size: 22px; }
+#repeat { position: relative; }
+.repeat-icon { width: 19px; height: 19px; stroke-width: 1.7; transition: stroke-width 180ms; }
+#repeat[aria-pressed="true"] { color: var(--accent); }
+#repeat[aria-pressed="true"] .repeat-icon { stroke-width: 2.1; }
+#repeat::after { content: ""; position: absolute; bottom: -2px; width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: 0; transform: scale(.5); transition: opacity 180ms,transform 180ms var(--ease); }
+#repeat[aria-pressed="true"]::after { opacity: 1; transform: scale(1); }
+#repeat:not(:disabled):active { transform: translateY(1px) scale(.94); }
+.control-tip { position: absolute; right: -8px; bottom: calc(100% + 12px); padding: 8px 11px; border-radius: 4px; background: #20201e; color: var(--ink); font-size: 11px; font-weight: 400; line-height: 1.4; white-space: nowrap; pointer-events: none; visibility: hidden; opacity: 0; transform: translateY(3px); transition: opacity 140ms,transform 140ms var(--ease),visibility 140ms; }
+#repeat:is(:hover,:focus-visible) .control-tip { visibility: visible; opacity: 1; transform: translateY(0); }
 .play { display: grid; place-items: center; background: var(--ink); color: #090909; border-radius: 50%; width: 32px; height: 32px; font-size: 12px; }
 .play:not(:disabled):hover { background: #fff; transform: scale(1.07); }
 .scrubber { display: flex; align-items: center; gap: 10px; font-size: 10px; color: var(--faint); font-variant-numeric: tabular-nums; }
