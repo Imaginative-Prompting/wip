@@ -1,30 +1,173 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#101211"><title>WIP</title>
-  <link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="app.css">
-</head>
-<body>
-  <header class="topbar"><a id="home-link" class="brand" href="/" aria-label="WIP home"><span class="brand-mark">w.</span><span>WIP<span class="brand-note">ROOM TO MAKE THINGS</span></span></a><div class="connection"><span id="live-dot"></span><span id="connection">Live workspace</span></div></header>
-  <main>
-    <div class="heading"><div><p class="eyebrow">YOUR WORK, TAKING SHAPE</p><h1 id="project-title">Work in progress.</h1><p id="project-description" class="description"></p></div><div class="project-select"><label for="projects">Workspace</label><select id="projects" aria-label="Project"></select></div></div>
-    <section id="current" class="current" aria-label="Current cut"></section>
-    <section class="library" aria-label="Work in progress entries">
-      <div class="search-row"><div class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a render, an idea, a note…" aria-label="Search work"><kbd>/</kbd></div><button id="collapse" class="subtle">Collapse all</button></div>
-      <div class="filter-row"><div id="tags" class="tags" aria-label="Filter by tag"></div><span id="result-count" class="result-count" aria-live="polite"></span></div>
-      <div id="notice" role="status" hidden></div><div id="list"></div><div id="empty" class="empty" hidden><span>Nothing here yet.</span><p>Try another search or clear the selected tags.</p><button id="clear" class="subtle">Clear filters</button></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#101211" />
+    <title>WIP</title>
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a id="home-link" class="brand" href="/" aria-label="WIP home"
+        ><span class="brand-mark">w.</span
+        ><span>WIP<span class="brand-note">ROOM TO MAKE THINGS</span></span></a
+      >
+      <div class="connection">
+        <span id="live-dot"></span><span id="connection">Live workspace</span>
+      </div>
+    </header>
+    <main>
+      <div class="heading">
+        <div>
+          <p class="eyebrow">YOUR WORK, TAKING SHAPE</p>
+          <h1 id="project-title">Work in progress.</h1>
+          <p id="project-description" class="description"></p>
+        </div>
+        <div class="project-select">
+          <label for="projects">Workspace</label
+          ><select id="projects" aria-label="Project"></select>
+        </div>
+      </div>
+      <section id="current" class="current" aria-label="Current cut"></section>
+      <section class="library" aria-label="Work in progress entries">
+        <div class="search-row">
+          <div class="search-wrap">
+            <span aria-hidden="true">⌕</span
+            ><input
+              id="search"
+              type="search"
+              placeholder="Find a render, an idea, a note…"
+              aria-label="Search work"
+            /><kbd>/</kbd>
+          </div>
+          <button id="collapse" class="subtle">Collapse all</button>
+        </div>
+        <div class="filter-row">
+          <div id="tags" class="tags" aria-label="Filter by tag"></div>
+          <span
+            id="result-count"
+            class="result-count"
+            aria-live="polite"
+          ></span>
+        </div>
+        <div id="notice" role="status" hidden></div>
+        <div id="list"></div>
+        <div id="empty" class="empty" hidden>
+          <span>Nothing here yet.</span>
+          <p>Try another search or clear the selected tags.</p>
+          <button id="clear" class="subtle">Clear filters</button>
+        </div>
+      </section>
+      <footer class="page-foot">
+        <span>A little less friction. A little more making.</span
+        ><span>WIP</span>
+      </footer>
+    </main>
+    <section id="preview" aria-label="Video preview" hidden>
+      <video id="video" playsinline preload="metadata"></video>
+      <div id="preview-message" role="status"></div>
+      <div class="preview-label">
+        <span id="preview-title"></span
+        ><button id="hide-preview" class="icon" aria-label="Hide video preview">
+          ×
+        </button>
+      </div>
     </section>
-    <footer class="page-foot"><span>A little less friction. A little more making.</span><span>WIP</span></footer>
-  </main>
-  <section id="preview" aria-label="Video preview" hidden><video id="video" playsinline preload="metadata"></video><div id="preview-message" role="status"></div><div class="preview-label"><span id="preview-title"></span><button id="hide-preview" class="icon" aria-label="Hide video preview">×</button></div></section>
-  <footer id="dock" class="dock" aria-label="Player">
-    <div class="now"><div id="now-art" class="now-art" aria-hidden="true">♪</div><div><div id="now-title">A place for your next idea.</div><div id="now-subtitle">Choose something to play</div></div></div>
-    <div class="transport"><div class="buttons"><button id="back" class="icon" aria-label="Back 10 seconds" title="Back 10 seconds">−10</button><button id="play" class="play" aria-label="Play" disabled>▶</button><button id="forward" class="icon" aria-label="Forward 10 seconds" title="Forward 10 seconds">+10</button><button id="repeat" class="icon" aria-label="Repeat" aria-pressed="true" title="Repeat">↻</button></div><div class="scrubber"><span id="elapsed">0:00</span><div class="seek-wrap"><input id="seek" type="range" min="0" max="100" step="0.01" value="0" aria-label="Playback position" disabled><div id="chapters"></div><div id="seek-tip" hidden></div></div><span id="duration">0:00</span></div><div id="lyric" class="lyric"></div></div>
-    <div class="options"><button id="mute" class="icon" aria-label="Mute" title="Mute">♪</button><input id="volume" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume"><button id="quality" class="text-button" hidden>720p</button><button id="show-preview" class="icon" aria-label="Show video preview" aria-pressed="false" disabled title="Video preview">▣</button><button id="fullscreen" class="icon" aria-label="Enter fullscreen" disabled title="Fullscreen">⛶</button></div>
-  </footer>
-  <audio id="audio" preload="metadata"></audio>
-  <dialog id="lightbox"><button id="close-lightbox" class="icon" aria-label="Close image">×</button><img alt=""><p></p></dialog>
-  <script type="module" src="app.js"></script>
-</body>
+    <footer id="dock" class="dock" aria-label="Player">
+      <div class="now">
+        <div id="now-art" class="now-art" aria-hidden="true">♪</div>
+        <div>
+          <div id="now-title">A place for your next idea.</div>
+          <div id="now-subtitle">Choose something to play</div>
+        </div>
+      </div>
+      <div class="transport">
+        <div class="buttons">
+          <button
+            id="back"
+            class="icon"
+            aria-label="Back 10 seconds"
+            title="Back 10 seconds"
+          >
+            −10</button
+          ><button id="play" class="play" aria-label="Play" disabled>▶</button
+          ><button
+            id="forward"
+            class="icon"
+            aria-label="Forward 10 seconds"
+            title="Forward 10 seconds"
+          >
+            +10</button
+          ><button
+            id="repeat"
+            class="icon"
+            aria-label="Repeat"
+            aria-pressed="true"
+            title="Repeat"
+          >
+            ↻
+          </button>
+        </div>
+        <div class="scrubber">
+          <span id="elapsed">0:00</span>
+          <div class="seek-wrap">
+            <input
+              id="seek"
+              type="range"
+              min="0"
+              max="100"
+              step="0.01"
+              value="0"
+              aria-label="Playback position"
+              disabled
+            />
+            <div id="chapters"></div>
+            <div id="seek-tip" hidden></div>
+          </div>
+          <span id="duration">0:00</span>
+        </div>
+        <div id="lyric" class="lyric"></div>
+      </div>
+      <div class="options">
+        <button id="mute" class="icon" aria-label="Mute" title="Mute">♪</button
+        ><input
+          id="volume"
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value="1"
+          aria-label="Volume"
+        /><button id="quality" class="text-button" hidden>720p</button
+        ><button
+          id="show-preview"
+          class="icon"
+          aria-label="Show video preview"
+          aria-pressed="false"
+          disabled
+          title="Video preview"
+        >
+          ▣</button
+        ><button
+          id="fullscreen"
+          class="icon"
+          aria-label="Enter fullscreen"
+          disabled
+          title="Fullscreen"
+        >
+          ⛶
+        </button>
+      </div>
+    </footer>
+    <audio id="audio" preload="metadata"></audio>
+    <dialog id="lightbox">
+      <button id="close-lightbox" class="icon" aria-label="Close image">
+        ×</button
+      ><img alt="" />
+      <p></p>
+    </dialog>
+    <script type="module" src="app.js"></script>
+  </body>
 </html>

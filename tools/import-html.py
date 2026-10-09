@@ -106,7 +106,7 @@ def section_value(raw, ident, order, page, mount, root, pages, fallback):
     meta=plain(meta_match[1]) if meta_match else ''
     start=summary.end() if summary else raw.find('>')+1
     body=raw[start:raw.rfind('</details>')].strip()
-    return {'id':ident,'title':title,'summary':meta,'tags':tags(title,body),'format':'html','body':rewrite(body,page,mount,root,pages),'searchText':plain(body),'updatedAt':timestamp(meta,fallback),'order':order}
+    return {'id':ident,'title':title,'summary':meta,'tags':tags(title,body),'format':'html','body':rewrite(body,page,mount,root,pages),'searchText':plain(body),'updatedAt':timestamp(meta,fallback),'dateKnown':bool(re.search(r'\d{1,2}\s+(Sep|Oct|Nov|Dec)',meta)),'order':order}
 
 def track_value(cut, song, page, mount, root, pages, project):
     conv=lambda v:asset(v,page,mount,root,pages) if v else None
@@ -136,7 +136,7 @@ def migrate(specfile, only=None):
             if not re.fullmatch(r'[a-z0-9][a-z0-9_-]{0,119}',ident):report['conflicts'].append(f'Unsupported ID: {ident}');continue
             seen.add(ident)
             value=section_value(raw[a:b],ident,order,page,mount,root,pages,fallback)
-            try:report[put(folder/'entries'/f'{ident}.json',value,digest(raw[a:b]),f'{project["id"]}#{ident}')]+=1
+            try:report[put(folder/'entries'/f'{ident}.json',value,digest('schema-2:'+raw[a:b]),f'{project["id"]}#{ident}')]+=1
             except ValueError as e:report['conflicts'].append(str(e))
         if parsed.cut and parsed.cut.get('src'):
             track=track_value(parsed.cut,parsed.song,page,mount,root,pages,project)
