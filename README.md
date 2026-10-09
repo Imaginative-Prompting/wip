@@ -117,7 +117,7 @@ creative approval.
 WIP also powers the work-in-progress collection at
 [Imaginative Prompting](https://imaginativeprompting.com/wip/). This is a separate
 film workspace; production media is not included in the standalone example.
-The hosted preview currently requires a password.
+The hosted collection is public and can be explored without signing in.
 
 ## Documentation
 
