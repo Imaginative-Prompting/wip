@@ -1,0 +1,21 @@
+{
+  "id": "palette",
+  "title": "The palette",
+  "summary": "Moss, pale sage, and a small warm accent.",
+  "tags": [
+    "stills",
+    "concepts"
+  ],
+  "body": "A muted background keeps the motion legible. The warm accent makes it easy to follow one form.",
+  "format": "markdown",
+  "updatedAt": "2026-10-09T00:00:00Z",
+  "revision": 1,
+  "order": 2,
+  "media": [
+    {
+      "type": "image",
+      "src": "/media/demo/poster.svg",
+      "title": "The palette"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "listening",
+  "title": "The listening pass",
+  "summary": "A quiet three-note chord, made for the study.",
+  "tags": [
+    "audio"
+  ],
+  "body": "This original sound is included so you can try the unified player with audio alone.",
+  "format": "markdown",
+  "updatedAt": "2026-10-09T00:00:00Z",
+  "revision": 1,
+  "order": 3,
+  "media": [
+    {
+      "type": "audio",
+      "src": "/media/demo/first-light.m4a",
+      "title": "The listening pass"
+    }
+  ]
+}

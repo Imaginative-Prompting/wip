@@ -1,0 +1,11 @@
+node_modules/
+.DS_Store
+*.log
+.env*
+workspace/
+wip.local.json
+.playwright-cli/
+test-results/
+
+__pycache__/
+*.pyc

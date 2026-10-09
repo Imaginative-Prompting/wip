@@ -1,0 +1,23 @@
+{
+  "id": "motion-study",
+  "title": "A slow orbit, a little room to breathe",
+  "summary": "The first motion study. Two forms circle a shared center, with a soft chord underneath.",
+  "tags": [
+    "renders"
+  ],
+  "body": "A simple starting point: an unhurried orbit, a dark green field, and a small warm accent.\n\nUse the player below to repeat the study. Hide the picture to keep listening, or open it fullscreen.",
+  "format": "markdown",
+  "updatedAt": "2026-10-09T00:00:00Z",
+  "revision": 1,
+  "order": 0,
+  "media": [
+    {
+      "type": "video",
+      "src": "/media/demo/first-light.mp4",
+      "title": "A slow orbit, a little room to breathe",
+      "poster": "/media/demo/poster.svg",
+      "songClock": true,
+      "offset": 0
+    }
+  ]
+}

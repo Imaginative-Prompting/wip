@@ -1,0 +1,22 @@
+{
+  "name": "@imaginative-prompting/wip",
+  "version": "1.0.0",
+  "description": "A quiet place to review work in progress. One list. One player.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "wip": "bin/wip.mjs"
+  },
+  "scripts": {
+    "start": "node bin/wip.mjs serve",
+    "test": "node --test test/*.test.mjs",
+    "check": "node bin/wip.mjs validate"
+  },
+  "dependencies": {
+    "dompurify": "3.4.16",
+    "marked": "18.1.0"
+  }
+}
