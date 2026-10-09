@@ -39,16 +39,19 @@ Automated tests do not replace those checks.
 
 ## README screenshots
 
-The screenshots are real browser captures, taken at 1440 × 960 CSS pixels:
+All README images are real browser captures of the public
+[The Way I Look At You workspace](https://imaginativeprompting.com/wip/?project=the-way-i-look-at-you),
+taken at 1440 × 960 CSS pixels:
 
-- `images/wip-player.png`: select First light, play its current cut, pause at
-  about five seconds, and leave the preview visible.
-- `images/wip-concepts.png`: hide the video preview, select Concepts, and expand
-  Start with a feeling.
-- `images/wip-films.png`: the separately reviewed Imaginative Prompting website
-  collection, with The Way I Look At You selected and its current cut visible.
+- `images/wip-player.png`: play the current cut, seek to the Atlanta sequence
+  around 2:41, pause, and leave its picture visible beside the production list.
+- `images/wip-concepts.png`: hide the preview and select Concepts, leaving the
+  real concept entries and persistent player visible.
+- `images/wip-films.png`: search for Atlanta at dawn, expand the original city
+  look test, and scroll to show its rendered district still and production notes.
 
 Capture only the page viewport, with no desktop, address bar, credentials, or
-private workspace content. The First light media is included in this repository;
-the film screenshot documents a separate installation. Refresh screenshots when
-the interface changes, and inspect every image before committing it.
+private workspace content. These images document the reviewed film workspace;
+the separate First light example remains the self-contained local starter.
+Refresh screenshots when the interface changes, and inspect every image before
+committing it. Do not substitute starter-demo screenshots for the film workspace.

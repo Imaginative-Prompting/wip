@@ -10,7 +10,9 @@ Concepts, renders, notes, and the current cut — one list, one player.
 
 </div>
 
-![WIP showing the First light example, its current cut, tagged entries, and the persistent audio and video player](docs/images/wip-player.png)
+![The Way I Look At You workspace showing the current cut, production entries, and the persistent player with a film preview](docs/images/wip-player.png)
+
+*All screenshots show the real [The Way I Look At You workspace](https://imaginativeprompting.com/wip/?project=the-way-i-look-at-you).*
 
 WIP is a local, file-based review app for people making things with agents.
 Keep an idea next to its first attempt, compare the next version, and leave the
@@ -59,7 +61,7 @@ projects and connect existing media folders.
 
 ## Find an idea without losing your place
 
-![The Concepts tag filters the First light workspace while an expanded entry shows its direction and notes](docs/images/wip-concepts.png)
+![The Concepts tag filters The Way I Look At You workspace to its real thumbnail options, city look tests, and style explorations](docs/images/wip-concepts.png)
 
 Search includes the text inside collapsed entries. Tags describe the work;
 review status is separate. Select more than one tag to see entries matching
@@ -112,7 +114,7 @@ creative approval.
 
 ## In use: the work behind the films
 
-![The Way I Look At You in WIP, with its current cut, production entries, and a synchronized film preview](docs/images/wip-films.png)
+![An expanded Atlanta city look study from The Way I Look At You, with production notes, a rendered still, and the persistent player](docs/images/wip-films.png)
 
 WIP also powers the work-in-progress collection at
 [Imaginative Prompting](https://imaginativeprompting.com/wip/). This is a separate
