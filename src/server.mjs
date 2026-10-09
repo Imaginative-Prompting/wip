@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { createReadStream, watch } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { appRoot, catalog, hash, inside } from './store.mjs';
 
 const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript', '.mjs':'text/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.avif':'image/avif', '.webp':'image/webp', '.gif':'image/gif', '.mp4':'video/mp4', '.webm':'video/webm', '.mov':'video/quicktime', '.mp3':'audio/mpeg', '.wav':'audio/wav', '.m4a':'audio/mp4', '.md':'text/plain; charset=utf-8', '.txt':'text/plain; charset=utf-8' };
@@ -55,8 +56,8 @@ export async function start(c, requestedPort) {
         if (partsOnDisk.some(p => p.startsWith('.') || ['capture', 'archive', 'node_modules'].includes(p))) { res.writeHead(403).end(); return; }
         if (!types[path.extname(file).toLowerCase()]) { res.writeHead(403).end('Unsupported asset type'); return; }
         if (path.extname(file) === '.html') res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:");
-      } else if (pathname === '/vendor/marked.js') file = path.join(appRoot, 'node_modules/marked/lib/marked.esm.js');
-      else if (pathname === '/vendor/purify.js') file = path.join(appRoot, 'node_modules/dompurify/dist/purify.es.mjs');
+      } else if (pathname === '/vendor/marked.js') file = fileURLToPath(import.meta.resolve('marked'));
+      else if (pathname === '/vendor/purify.js') file = fileURLToPath(import.meta.resolve('dompurify'));
       else {
         file = await inside(path.join(appRoot, 'web'), pathname === '/' ? 'index.html' : pathname.slice(1));
         res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: http: data:; media-src 'self' https: http:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");

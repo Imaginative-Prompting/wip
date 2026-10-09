@@ -2,6 +2,7 @@ import { readFile, writeFile, mkdir, cp, stat } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { appRoot, catalog, inside, atomic } from './store.mjs';
 
 // The output contains only selected projects and content-addressed public media
@@ -36,8 +37,8 @@ export async function exportStatic(c, {out, projects, mediaBase='/media/', trans
   await mkdir(out,{recursive:true});
   await cp(path.join(appRoot,'web'),out,{recursive:true});
   await mkdir(path.join(out,'vendor'),{recursive:true});
-  await cp(path.join(appRoot,'node_modules/marked/lib/marked.esm.js'),path.join(out,'vendor/marked.js'));
-  await cp(path.join(appRoot,'node_modules/dompurify/dist/purify.es.mjs'),path.join(out,'vendor/purify.js'));
+  await cp(fileURLToPath(import.meta.resolve('marked')),path.join(out,'vendor/marked.js'));
+  await cp(fileURLToPath(import.meta.resolve('dompurify')),path.join(out,'vendor/purify.js'));
   let index=await readFile(path.join(out,'index.html'),'utf8');
   index=index.replace('<html lang="en">','<html lang="en" data-mode="static">');
   await writeFile(path.join(out,'index.html'),index);
