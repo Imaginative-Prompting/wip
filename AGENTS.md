@@ -20,8 +20,10 @@ WIP is a generic review app. Keep project data and media outside the app source.
   author and committer `Imaginative-Prompting` with
   `337144060+Imaginative-Prompting@users.noreply.github.com`. No coauthor trailers,
   bots, alternate accounts, or other contributors. Verify identity before pushing.
-- Never publish the repository publicly or change its visibility without an
-  explicit owner request. Keep the default example independent of other repos.
+- The owner explicitly confirmed public visibility on 9 October 2026. Keep it
+  public; do not change visibility without a new owner request. Keep the default
+  example independent of other repos. Publishing source does not authorize
+  publishing private project data, captures, or production media.
 
 Before changing the UI, read `docs/design.md`. Keep the list, search, tags, and
 current cut free of borders and background panels.
