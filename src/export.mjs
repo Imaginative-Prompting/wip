@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir, cp, stat } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, cp, stat, realpath } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -22,7 +22,7 @@ export async function exportStatic(c, {out, projects, mediaBase='/media/', trans
     const u=new URL(ref,'http://local');const parts=decodeURIComponent(u.pathname).slice(7).split('/');const mount=parts.shift();
     if(!c.mounts[mount])throw new Error(`Unknown media mount: ${mount}`);
     const original=await inside(c.mounts[mount],parts.join('/'));
-    if(path.relative(c.mounts[mount],original).split(path.sep).some(p=>p.startsWith('.')||['archive','capture','node_modules'].includes(p)))throw new Error('Private media path refused');
+    if(path.relative(await realpath(c.mounts[mount]),original).split(path.sep).some(p=>p.startsWith('.')||['archive','capture','node_modules'].includes(p)))throw new Error('Private media path refused');
     const source=resolveMedia?await resolveMedia(original):original;
     if(!source){replacements.set(ref,'#unavailable');continue;}
     const ext=path.extname(source).toLowerCase();
