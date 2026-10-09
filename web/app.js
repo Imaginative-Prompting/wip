@@ -567,7 +567,7 @@ const tickUI = () => {
     "aria-label",
     player.preview ? "Hide video preview" : "Show video preview",
   );
-  $("now-title").textContent = t?.title || "A place for your next idea.";
+  $("now-title").textContent = t?.title || "Nothing playing";
   const chapter = (t?.chapters || [])
     .filter((c) => c.t <= player.time)
     .at(-1)?.label;
