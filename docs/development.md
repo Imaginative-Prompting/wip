@@ -28,6 +28,7 @@ byte ranges, timing helpers, legacy import behavior, and static exports.
 | `src/export.mjs` | Allowlisted static export and private upload manifest |
 | `web/app.js` | Project selection, search, tags, entries, and player controls |
 | `web/player.js` | Playback clock, audio/video synchronization, repeat, and persistence |
+| `web/clips.js` | Clip discovery order, deduplication, and shared track metadata |
 | `web/playback-history.js` | Per-project cut and clip resume positions |
 | `web/preview-window.js` | Mini-player geometry, drag, resize, and theatre layout |
 | `web/app.css` | Layout, typography, focus, and hover behavior |

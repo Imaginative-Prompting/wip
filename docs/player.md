@@ -13,6 +13,12 @@ resumes the selected project's latest cut in one click. **Back to clip** returns
 to its last clip at the position you left. Each project keeps separate cut and
 clip positions, including across reloads. Use the project selector in the dock
 to switch WIPs without stopping playback or losing the clip you were reviewing.
+The chevron beside **Clip** opens a searchable, scrollable picker of every audio
+and video attachment or media link in the project, including collapsed entries.
+It sorts newest first by `createdAt` (falling back to the original entry date);
+editing an entry does not move it ahead of newer work. Undated imports retain
+their relative order at the end. Duplicate references to one media URL appear
+once. Choosing a clip leaves the picker open for quick comparison.
 
 Drag the mini preview by its title to snap it to any corner above the dock. Drag
 the diagonal handle at its free corner to resize it; size and corner are saved.
@@ -43,7 +49,14 @@ picture through that silent tail before repeating. For a video excerpt on its
 project's song clock, attach `songClock: true` and `offset` in seconds to its
 entry media. Never guess an offset for an edited Short or a clip with its own mix.
 
-The space bar / K toggle playback, arrow keys seek five seconds, F toggles
+The −1 / +1 buttons and arrow keys seek one second; Shift+arrow seeks ten.
+The frame buttons or comma / period pause and step the picture one frame at a
+time, with a frame counter below the seek bar. Frame stepping uses the track's
+`fps` (or a media attachment/project's `fps`), defaulting to 30. Supply the actual rate
+for other footage, including fractional rates such as `24000 / 1001`. Song-clock
+excerpts step on their video frames while keeping the audio clock aligned.
+
+The space bar / K toggle playback, F toggles
 theatre mode, Shift+F toggles true fullscreen, Escape leaves theatre mode, and /
 focuses search. Playback is restored paused after a reload, with the picture visibility retained.
 Browser autoplay rules still apply. New cut versions never replace an actively

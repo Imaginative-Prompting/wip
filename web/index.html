@@ -77,27 +77,33 @@
           <select id="dock-projects" aria-label="Switch WIP"></select>
           <div id="now-title">Nothing playing</div>
           <div id="now-subtitle">Choose something to play</div>
-          <div class="track-switch"><button id="current-track" aria-pressed="false" disabled>Current cut</button><button id="return-clip" aria-pressed="false" hidden>Back to clip</button></div>
+          <div class="track-switch"><button id="current-track" aria-pressed="false" disabled>Current cut</button><button id="return-clip" aria-pressed="false" hidden>Back to clip</button><button id="browse-clips" class="browse-clips" aria-label="Browse clips" aria-expanded="false" aria-controls="clip-picker" title="Browse all clips"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg></button></div>
         </div>
       </div>
+      <section id="clip-picker" class="clip-picker" aria-label="Clip picker" hidden>
+        <div class="clip-heading"><span id="clip-heading">Clips</span><span>Newest first</span><button id="close-clips" class="icon" aria-label="Close clip picker">×</button></div>
+        <input id="clip-search" type="search" placeholder="Find a clip" aria-label="Search clips" />
+        <div id="clip-list" class="clip-list"></div>
+      </section>
       <div class="transport">
         <div class="buttons">
+          <button id="frame-back" class="icon frame-step" aria-label="Previous frame" title="Previous frame (,)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 5v14M19 5l-9 7 9 7Z"/></svg></button>
           <button
             id="back"
             class="icon"
-            aria-label="Back 10 seconds"
-            title="Back 10 seconds"
+            aria-label="Back 1 second"
+            title="Back 1 second"
           >
-            −10</button
+            −1</button
           ><button id="play" class="play" aria-label="Play" disabled>▶</button
           ><button
             id="forward"
             class="icon"
-            aria-label="Forward 10 seconds"
-            title="Forward 10 seconds"
+            aria-label="Forward 1 second"
+            title="Forward 1 second"
           >
-            +10</button
-          ><button
+            +1</button>
+          <button id="frame-forward" class="icon frame-step" aria-label="Next frame" title="Next frame (.)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M19 5v14M5 5l9 7-9 7Z"/></svg></button><button
             id="repeat"
             class="icon"
             aria-label="Repeat"

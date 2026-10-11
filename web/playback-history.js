@@ -4,7 +4,8 @@ export const trackKind = (track) =>
   track?.id === `${track?.project}:current` || track?.id === `${track?.project}:song`
     ? "current" : "clip";
 export const sameTrack = (a, b) => !!a && !!b &&
-  a.id === b.id && a.version === b.version && a.audio === b.audio && a.video === b.video;
+  a.id === b.id && a.version === b.version && a.audio === b.audio && a.video === b.video &&
+  (a.fps || 30) === (b.fps || 30);
 
 // One parked cut and one parked clip per project. Browsing never changes these.
 export class PlaybackHistory {

@@ -123,6 +123,8 @@ export function validateEntry(e) {
     for (const m of e.media) {
       if (!["audio", "video", "image"].includes(m.type) || !safeURL(m.src))
         throw new Error("Invalid media reference");
+      if (m.fps != null && (!Number.isFinite(m.fps) || m.fps <= 0 || m.fps > 240))
+        throw new Error("Invalid media fps");
       if (m.offset != null && (!Number.isFinite(m.offset) || m.offset < 0))
         throw new Error("Invalid media offset");
     }
@@ -140,6 +142,8 @@ export function validateTrack(track) {
     throw new Error("Track needs audio or video");
   for (const k of ["audio", "video", "lite", "poster"])
     if (track[k] && !safeURL(track[k])) throw new Error(`Invalid ${k} URL`);
+  if (track.fps != null && (!Number.isFinite(track.fps) || track.fps <= 0 || track.fps > 240))
+    throw new Error("Invalid track fps");
   for (const k of ["duration", "songEnd", "offset"])
     if (track[k] != null && (!Number.isFinite(track[k]) || track[k] < 0))
       throw new Error(`Invalid ${k}`);

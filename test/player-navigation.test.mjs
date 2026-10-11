@@ -54,3 +54,46 @@ test("drag release snaps according to the preview center in the available area",
   for (const [x,y,corner] of [[0,0,"top-left"],[1100,0,"top-right"],[0,650,"bottom-left"],[1100,650,"bottom-right"]])
     assert.equal(nearestCorner({x,y,width:300,height:169},vp),corner);
 });
+
+import { collectClips, trackFor } from "../web/clips.js";
+import { frameTime } from "../web/player.js";
+import { validateTrack, validateEntry } from "../src/store.mjs";
+test("clip picker uses added dates, not edit dates, and retains undated import order", () => {
+  const entries = [
+    {id:"old",title:"Old revised",createdAt:"2026-01-01",updatedAt:"2026-10-10"},
+    {id:"new",title:"New",createdAt:"2026-10-01",updatedAt:"2026-10-01"},
+    {id:"undated",title:"Undated",updatedAt:"2026-10-11",dateKnown:false},
+    {id:"same-day",title:"Same day import",updatedAt:"2026-10-01",order:0},
+  ].map(e=>({...e,media:[{type:"video",src:`/media/test/${e.id}.mp4`}]}));
+  const clips=collectClips({id:"p",title:"Project",entries},()=>[]);
+  assert.deepEqual(clips.map(c=>c.entry),["Same day import","New","Old revised","Undated"]);
+});
+test("clip picker collects attachments and body media once, retaining song offsets", () => {
+  const media={type:"video",src:"/media/test/excerpt.mp4",songClock:true,offset:42,fps:24};
+  const p={id:"p",title:"Project",song:{audio:"/media/test/song.wav",duration:100},entries:[{id:"e",title:"Excerpt",updatedAt:"2026-10-01",media:[media]}]};
+  const clips=collectClips(p,()=>[{...media,songClock:false},{type:"audio",src:"/media/test/mix.wav"},{type:"image",src:"/media/test/still.jpg"},{type:"video",src:"file:///private/clip.mp4"}]);
+  assert.equal(clips.length,2);
+  assert.equal(clips[0].track.offset,42);
+  assert.equal(clips[0].track.audio,p.song.audio);
+  assert.equal(clips[0].track.fps,24);
+  assert.deepEqual(clips[0].track,trackFor(media,p,p.entries[0]));
+});
+test("frame stepping respects exact boundaries, fractional rates, offsets and video ends", () => {
+  assert.equal(frameTime(1,1,30),31/30);
+  assert.equal(frameTime(31/30,-1,30),1);
+  assert.equal(frameTime(1.01,-1,30),29/30);
+  assert.equal(frameTime(0,-1,30),0);
+  assert.equal(frameTime(2,1,30,0,2),59/30);
+  assert.equal(frameTime(42,1,24,42,3),42+1/24);
+  assert.equal(frameTime(40,-1,24,42,3),42);
+  const fps=24000/1001;
+  assert.ok(Math.abs(frameTime(10/fps,1,fps)-11/fps)<1e-8);
+});
+test("invalid frame rates cannot enter tracks or attachments", () => {
+  const track={title:"Cut",video:"/media/test/cut.mp4"};
+  for(const fps of [0,-1,Infinity,241]) {
+    assert.throws(()=>validateTrack({...track,fps}),/fps/);
+    assert.throws(()=>validateEntry({id:"e",title:"Entry",body:"",tags:[],updatedAt:"2026-10-01",media:[{type:"video",src:track.video,fps}]}),/fps/);
+  }
+  validateTrack({...track,fps:24000/1001});
+});

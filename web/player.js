@@ -7,6 +7,11 @@ export function durationOf(track, audioDuration, videoDuration) {
 export function videoPosition(track, time) {
   return time - (track?.offset || 0);
 }
+export function frameTime(time, direction, fps, offset = 0, videoDuration = Infinity) {
+  const index = Math.floor((time - offset) * fps + .0001) + direction;
+  const last = Number.isFinite(videoDuration) ? Math.max(0, Math.ceil(videoDuration * fps) - 1) : Infinity;
+  return offset + Math.max(0, Math.min(last, index)) / fps;
+}
 export class Player extends EventTarget {
   constructor(audio, video) {
     super();
@@ -19,6 +24,7 @@ export class Player extends EventTarget {
     this.quality = "720";
     this.time = 0;
     this.tail = null;
+    this.stepping = false;
     this.error = "";
     this.epoch = 0;
     for (const m of [audio, video]) {
@@ -93,6 +99,7 @@ export class Player extends EventTarget {
     this.video.pause();
     this.playing = false;
     this.tail = null;
+    this.stepping = false;
     this.error = "";
     this.track = { ...track };
     this.time = Math.max(0, time);
@@ -121,7 +128,9 @@ export class Player extends EventTarget {
         Number.isFinite(d) ? Math.max(0, d - 0.001) : this.time,
       );
     }
-    const vt = videoPosition(this.track, this.time);
+    // Seek just inside a frame: rounded media timestamps can otherwise show
+    // the preceding picture at an exact fractional frame boundary.
+    const vt = videoPosition(this.track, this.time) + (this.stepping ? 0.001 : 0);
     if (this.track.video && this.video.readyState >= 1)
       this.video.currentTime = Math.max(
         0,
@@ -135,6 +144,7 @@ export class Player extends EventTarget {
   }
   async play() {
     if (!this.track) return;
+    this.stepping = false;
     if (this.duration && this.time >= this.duration - 0.03) this.seek(0);
     this.error = "";
     this.playing = true;
@@ -169,8 +179,9 @@ export class Player extends EventTarget {
   toggle() {
     this.playing ? this.pause() : this.play();
   }
-  seek(t) {
+  seek(t, { frame = false } = {}) {
     if (!this.track) return;
+    this.stepping = frame;
     this.time = Math.max(
       0,
       Math.min(Number(t) || 0, this.duration || Infinity),
@@ -189,6 +200,17 @@ export class Player extends EventTarget {
       this.syncVideo(true);
     }
     this.update();
+  }
+  get fps() {
+    const fps = Number(this.track?.fps);
+    return Number.isFinite(fps) && fps > 0 && fps <= 240 ? fps : 30;
+  }
+  stepFrame(direction) {
+    if (!this.track?.video) return;
+    this.pause();
+    this.showPreview(true);
+    this.seek(frameTime(this.time, direction, this.fps, this.track.offset || 0,
+      Number.isFinite(this.video.duration) ? this.video.duration : Infinity), { frame: true });
   }
   showPreview(on) {
     this.preview = !!on && !!this.track?.video;

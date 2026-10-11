@@ -74,7 +74,9 @@ an audio track is paired with video, audio is the master clock. Hide the picture
 to keep listening, then bring it back at the right point in the song.
 
 Switch WIPs, resume the current cut, or return to your last clip directly from
-the dock. Drag the mini player to any corner and resize it. Theatre mode fills
+the dock. The clip picker lists every audio/video clip, newest first, with search
+and scrolling. Step one second or one frame at a time to review a detail.
+Drag the mini player to any corner and resize it. Theatre mode fills
 the page; the button at the bottom right of the picture opens true fullscreen.
 
 Repeat, seeking, chapter markers, and optional lighter video all use the same player. A new current-cut version waits for your selection instead
@@ -83,7 +85,8 @@ of interrupting the version you are playing.
 | Key | Action |
 | :--- | :--- |
 | <kbd>Space</kbd> / <kbd>K</kbd> | Play or pause |
-| <kbd>←</kbd> / <kbd>→</kbd> | Seek five seconds |
+| <kbd>←</kbd> / <kbd>→</kbd> | Seek one second (Shift: ten seconds) |
+| <kbd>,</kbd> / <kbd>.</kbd> | Previous / next frame, paused |
 | <kbd>F</kbd> | Toggle theatre mode |
 | <kbd>Shift</kbd> + <kbd>F</kbd> | Toggle true fullscreen |
 | <kbd>Esc</kbd> | Leave theatre mode |

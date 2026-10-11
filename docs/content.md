@@ -13,7 +13,7 @@ An entry requires `id`, `title`, `tags` (array), `body` (text), and `updatedAt`
 (ISO timestamp). `format` defaults to `markdown`, or can be `html`. Optional:
 `summary`, `status`, `createdAt`, `order`, and `media`. A media attachment has
 `type` (`image`, `audio`, `video`), `src`, and optional `title`, `poster`,
-`songClock` and `offset`. The CLI supplies `revision` and preserves `createdAt`.
+`songClock`, `offset`, and `fps` (positive, up to 240; defaults to 30 for frame stepping). The CLI supplies `revision` and preserves `createdAt`.
 
 ```sh
 node bin/wip.mjs project --config /path/wip.json --id demo --title "A new project"

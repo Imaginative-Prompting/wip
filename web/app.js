@@ -2,6 +2,7 @@ import { marked } from "./vendor/marked.js";
 import DOMPurify from "./vendor/purify.js";
 import { Player, fmt, videoPosition } from "./player.js";
 import { sameTrack } from "./playback-history.js";
+import { collectClips, trackFor } from "./clips.js";
 import { PreviewWindow } from "./preview-window.js";
 const $ = (id) => document.getElementById(id);
 const BASE = new URL("./", import.meta.url).pathname;
@@ -80,6 +81,7 @@ function currentFor(p) {
   return p.current
     ? {
         ...p.current,
+        fps: p.current.fps || p.fps || 30,
         id: `${p.id}:current`,
         project: p.id,
         projectTitle: p.title,
@@ -110,9 +112,11 @@ function updateTrackSwitch() {
   $("current-track").textContent = p?.current ? "Current cut" : p?.song ? "Soundtrack" : "Current cut";
   $("current-track").setAttribute("aria-pressed", String(isCurrent));
   $("current-track").title = current ? `Resume ${p.current ? "current cut" : "soundtrack"} · ${p.title}` : "Select a WIP with a current cut or soundtrack";
-  $("return-clip").hidden = !clip;
+  $("return-clip").hidden = false;
+  $("return-clip").disabled = !clip;
+  $("browse-clips").disabled = !p;
   const isClip = !!clip && sameTrack(player.track, clip.track);
-  $("return-clip").textContent = isClip ? "Clip" : "Back to clip";
+  $("return-clip").textContent = !clip || isClip ? "Clip" : "Back to clip";
   $("return-clip").setAttribute("aria-pressed", String(isClip));
   $("return-clip").title = clip ? `Resume ${clip.track.title} at ${fmt(isClip ? player.time : clip.time)}` : "";
 }
@@ -123,6 +127,84 @@ $("current-track").addEventListener("click", () => {
 $("return-clip").addEventListener("click", () => {
   const p = dockProject(), clip = p && player.history.get(p.id, "clip");
   if (clip) loadTrack(clip.track, clip.preview, sameTrack(player.track, clip.track) ? player.time : clip.time);
+});
+function playClip(track) {
+  const time = player.track?.id === track.id ? player.time
+    : player.history.get(track.project, "clip")?.track.id === track.id
+      ? player.history.position(track) : track.offset || 0;
+  loadTrack(track, !!track.video, time);
+}
+function mediaInBody(entry) {
+  const template = document.createElement("template");
+  template.innerHTML = DOMPurify.sanitize(entry.format === "html" ? entry.body : marked.parse(entry.body));
+  const media = [];
+  for (const el of template.content.querySelectorAll("video,audio,a[href]")) {
+    const src = el.getAttribute("src") || el.querySelector("source")?.getAttribute("src") || el.getAttribute("href");
+    if (!src) continue;
+    const type = el.tagName === "AUDIO" || /\.(mp3|wav|m4a|ogg|flac)(?:[?#]|$)/i.test(src) ? "audio"
+      : el.tagName === "VIDEO" || /\.(mp4|webm|mov)(?:[?#]|$)/i.test(src) ? "video" : null;
+    if (type) media.push({ src, type, poster: el.getAttribute("poster"),
+      fps: Number(el.dataset.fps) || undefined,
+      title: el.closest("figure")?.querySelector("figcaption")?.textContent.trim() || el.textContent.trim() || entry.title });
+  }
+  return media;
+}
+const clipCache = new Map();
+function renderClips() {
+  const p = dockProject();
+  if (!p) { closeClips(); return; }
+  if (!clipCache.has(p.id)) clipCache.set(p.id, collectClips(p, mediaInBody));
+  const clips = clipCache.get(p.id), words = $("clip-search").value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  $("clip-heading").textContent = `Clips · ${clips.length}`;
+  const visibleClips = clips.filter((c) => words.every((word) => `${c.track.title} ${c.entry}`.toLowerCase().includes(word)));
+  const list = document.createDocumentFragment();
+  for (const clip of visibleClips) {
+    const button = make("button", "clip-option");
+    button.dataset.track = clip.track.id;
+    button.setAttribute("aria-pressed", String(sameTrack(player.track, clip.track)));
+    button.append(make("span", "clip-kind", clip.type === "audio" ? "♫" : "▷"));
+    const copy = make("span", "clip-copy");
+    copy.append(make("span", "", clip.track.title));
+    const date = clip.dateKnown ? new Date(clip.added).toLocaleDateString(undefined, {month:"short", day:"numeric"}) : "Undated";
+    copy.append(make("small", "", `${date}${clip.entry !== clip.track.title ? ` · ${clip.entry}` : ""}`));
+    button.append(copy);
+    button.title = clip.track.title;
+    button.addEventListener("click", () => { playClip(clip.track); updateClipSelection(); });
+    list.append(button);
+  }
+  if (!visibleClips.length) list.append(make("p", "clip-empty", clips.length ? "No matching clips." : "No audio or video clips in this WIP yet."));
+  $("clip-list").replaceChildren(list);
+}
+function updateClipSelection() {
+  for (const button of $("clip-list").querySelectorAll("button"))
+    button.setAttribute("aria-pressed", String(button.dataset.track === player.track?.id));
+}
+function closeClips(focus = false) {
+  $("clip-picker").hidden = true;
+  $("browse-clips").setAttribute("aria-expanded", "false");
+  if (focus) $("browse-clips").focus();
+}
+$("browse-clips").addEventListener("click", () => {
+  if (!$("clip-picker").hidden) { closeClips(); return; }
+  $("clip-search").value = "";
+  renderClips();
+  $("clip-picker").hidden = false;
+  $("browse-clips").setAttribute("aria-expanded", "true");
+  $("clip-search").focus();
+});
+$("close-clips").addEventListener("click", () => closeClips(true));
+$("clip-search").addEventListener("input", renderClips);
+$("clip-picker").addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeClips(true); }
+  if (["ArrowDown", "ArrowUp"].includes(e.key)) {
+    e.preventDefault();
+    const buttons = [...$("clip-list").querySelectorAll("button")];
+    const index = buttons.indexOf(document.activeElement);
+    buttons[Math.max(0, Math.min(buttons.length - 1, index + (e.key === "ArrowDown" ? 1 : -1)))]?.focus();
+  }
+});
+document.addEventListener("pointerdown", (e) => {
+  if (!$("clip-picker").contains(e.target) && !$("browse-clips").contains(e.target)) closeClips();
 });
 function renderCurrent() {
   const p = data.projects.find((p) => p.id === project),
@@ -226,32 +308,7 @@ function mediaButton(m, p, e) {
   );
   b.append(copy);
   b.addEventListener("click", () => {
-    const base = {
-      id: `${p.id}:${e.id}:${m.src}`,
-      title: m.title || e.title,
-      project: p.id,
-      projectTitle: p.title,
-      poster: m.poster,
-    };
-    if (m.type === "video" && m.songClock && p.song) {
-      loadTrack(
-        {
-          ...base,
-          audio: p.song.audio,
-          video: m.src,
-          offset: m.offset || 0,
-          duration: p.song.duration || p.current?.duration,
-          chapters: p.current?.chapters || p.song.chapters,
-          lines: p.current?.lines || p.song.lines,
-        },
-        true,
-      );
-      player.seek(m.offset || 0);
-    } else
-      loadTrack(
-        { ...base, [m.type === "audio" ? "audio" : "video"]: m.src },
-        m.type === "video",
-      );
+    playClip(trackFor(m, p, e));
   });
   return b;
 }
@@ -457,6 +514,7 @@ function render() {
   $("dock-projects").value = project;
   updateTrackSwitch();
   renderCurrent();
+  if (!$("clip-picker").hidden) renderClips();
   const all = ps.flatMap((p) => p.entries.map((e) => ({ p, e })));
   const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
   const searched = all.filter(({ p, e }) =>
@@ -504,6 +562,7 @@ async function refresh() {
   );
   if (!response.ok) throw new Error("Workspace unavailable");
   data = await response.json();
+  clipCache.clear();
   $("projects").replaceChildren();
   const all = make("option", "", "All projects");
   all.value = "all";
@@ -586,6 +645,10 @@ const tickUI = () => {
   $("seek").disabled = !has;
   $("back").disabled = !has;
   $("forward").disabled = !has;
+  $("frame-back").disabled = !t?.video;
+  $("frame-forward").disabled = !t?.video;
+  $("frame-back").title = `Previous frame · ${player.fps} fps (,)`;
+  $("frame-forward").title = `Next frame · ${player.fps} fps (.)`;
   $("show-preview").disabled = !t?.video;
   $("theatre").disabled = !t?.video;
   if (!player.preview && previewWindow.theatre) previewWindow.setTheatre(false);
@@ -621,7 +684,7 @@ const tickUI = () => {
   );
   const ln = t?.lines?.find((l) => l.t0 <= player.time && l.t1 > player.time);
   $("lyric").textContent =
-    ln?.text || (t?.songEnd && player.time > t.songEnd ? "End screen" : "");
+    player.stepping ? `Frame ${Math.max(0, Math.round(videoPosition(t, player.time) * player.fps))} · ${player.fps} fps` : ln?.text || (t?.songEnd && player.time > t.songEnd ? "End screen" : "");
   if (!player.preview && document.fullscreenElement === $("preview"))
     document.exitFullscreen().catch(() => {});
   $("preview").hidden = !player.preview && !document.fullscreenElement;
@@ -638,6 +701,7 @@ const tickUI = () => {
   const meta = JSON.stringify([t?.id, t?.version, t?.poster, player.duration]);
   if (meta !== lastMeta) {
     lastMeta = meta;
+    if (!$("clip-picker").hidden) updateClipSelection();
     $("now-art").style.backgroundImage = t?.poster
       ? `url(${JSON.stringify(t.poster)})`
       : "";
@@ -653,8 +717,10 @@ const tickUI = () => {
 player.addEventListener("change", tickUI);
 tickUI();
 $("play").addEventListener("click", () => player.toggle());
-$("back").addEventListener("click", () => player.seek(player.time - 10));
-$("forward").addEventListener("click", () => player.seek(player.time + 10));
+$("back").addEventListener("click", () => player.seek(player.time - 1));
+$("forward").addEventListener("click", () => player.seek(player.time + 1));
+$("frame-back").addEventListener("click", () => player.stepFrame(-1));
+$("frame-forward").addEventListener("click", () => player.stepFrame(1));
 $("repeat").addEventListener("click", () => {
   player.repeat = !player.repeat;
   player.update();
@@ -801,8 +867,10 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     e.shiftKey ? fullscreen() : theatre();
   }
-  else if (e.key === "ArrowLeft") player.seek(player.time - 5);
-  else if (e.key === "ArrowRight") player.seek(player.time + 5);
+  else if (e.key === ",") { e.preventDefault(); player.stepFrame(-1); }
+  else if (e.key === ".") { e.preventDefault(); player.stepFrame(1); }
+  else if (e.key === "ArrowLeft") { e.preventDefault(); player.seek(player.time - (e.shiftKey ? 10 : 1)); }
+  else if (e.key === "ArrowRight") { e.preventDefault(); player.seek(player.time + (e.shiftKey ? 10 : 1)); }
   awake();
 });
 try {
