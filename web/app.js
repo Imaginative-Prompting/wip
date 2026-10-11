@@ -693,7 +693,9 @@ const tickUI = () => {
   $("preview-message").textContent =
     player.preview && (vt < 0 || vt >= $("video").duration)
       ? "No picture at this point in the song"
-      : player.preview && $("video").readyState < 2
+      // A seek temporarily drops readyState even with a decoded picture still
+      // on screen. Keep that picture unobscured while the next frame arrives.
+      : player.preview && !player.hasPicture && $("video").readyState < 2
         ? "Loading picture…"
         : "";
   $("quality").hidden = !t?.lite;
@@ -846,17 +848,22 @@ const awake = () => {
 $("preview").addEventListener("pointermove", awake);
 $("preview").addEventListener("focusin", awake);
 document.addEventListener("keydown", (e) => {
-  if (e.defaultPrevented) return;
+  if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+  const playerRange = e.target === $("seek") || e.target === $("volume");
   if (
-    e.target.closest("input,textarea,select,[contenteditable]") ||
+    e.target.isContentEditable ||
+    (e.target.closest("input,textarea,select") && !playerRange) ||
     $("lightbox").open
   )
     return;
+  // Player sliders keep focus after scrubbing. Frame keys still operate the
+  // transport; volume arrows and text fields keep their native behavior.
+  if (e.target === $("volume") && e.key.startsWith("Arrow")) return;
   if (e.key === "/") {
     e.preventDefault();
     $("search").focus();
   } else if (
-    (e.key === " " && e.target === document.body) ||
+    (e.key === " " && (e.target === document.body || playerRange)) ||
     e.key.toLowerCase() === "k"
   ) {
     e.preventDefault();

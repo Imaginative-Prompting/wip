@@ -25,6 +25,7 @@ export class Player extends EventTarget {
     this.time = 0;
     this.tail = null;
     this.stepping = false;
+    this.hasPicture = false;
     this.error = "";
     this.epoch = 0;
     for (const m of [audio, video]) {
@@ -48,6 +49,10 @@ export class Player extends EventTarget {
         if (this.playing && m === video && this.preview) this.syncVideo(true);
       });
     }
+    video.addEventListener("loadeddata", () => {
+      this.hasPicture = true;
+      this.update();
+    });
     this.timer = setInterval(() => this.tick(), 150);
     let saved = {};
     try {
@@ -101,6 +106,7 @@ export class Player extends EventTarget {
     this.tail = null;
     this.stepping = false;
     this.error = "";
+    this.hasPicture = false;
     this.track = { ...track };
     this.time = Math.max(0, time);
     this.preview = preview && !!track.video;
@@ -208,7 +214,8 @@ export class Player extends EventTarget {
   stepFrame(direction) {
     if (!this.track?.video) return;
     this.pause();
-    this.showPreview(true);
+    // Reveal the picture without first seeking back to the previous frame.
+    this.preview = true;
     this.seek(frameTime(this.time, direction, this.fps, this.track.offset || 0,
       Number.isFinite(this.video.duration) ? this.video.duration : Infinity), { frame: true });
   }
@@ -226,6 +233,7 @@ export class Player extends EventTarget {
     const src =
       q === "720" && this.track.lite ? this.track.lite : this.track.video;
     const epoch = this.epoch;
+    this.hasPicture = false;
     this.video.src = src;
     this.video.addEventListener(
       "loadedmetadata",
