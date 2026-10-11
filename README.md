@@ -10,7 +10,7 @@ Concepts, renders, notes, and the current cut — one list, one player.
 
 </div>
 
-![The Way I Look At You workspace showing the current cut, production entries, and the persistent player with a film preview](docs/images/wip-player.png)
+![The Way I Look At You workspace showing the current cut, production entries, and the persistent player, complete clip picker, and film preview](docs/images/wip-player.png)
 
 *All screenshots show the real [The Way I Look At You workspace](https://imaginativeprompting.com/wip/?project=the-way-i-look-at-you).*
 
