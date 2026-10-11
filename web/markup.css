@@ -78,3 +78,5 @@
 
 #markup-toolbar { flex-wrap:wrap; }
 .markup-popover { border:0; }
+/* Dock popovers remain reachable while the marked-frame sidebar is open. */
+body.markup-open .dock { z-index:24; }
