@@ -212,7 +212,7 @@ export class Markup {
     for(const a of records){const b=el('button',{type:'button',class:'markup-frame','data-annotation':a.id,'data-owner':String(!!a.owner)});const picture=el('div',{class:'markup-thumb'});
       if(a.thumbnail)picture.append(el('img',{src:a.thumbnail,alt:'',loading:'lazy'}));
       const overlay=svg('svg',{viewBox:`0 0 ${a.width} ${a.height}`,'aria-hidden':true});for(const d of a.drawings)overlay.append(svg('path',{d:drawingPath(d),fill:'none',stroke:d.color,'stroke-width':d.width,'stroke-linecap':'round','stroke-linejoin':'round'}));picture.append(overlay);
-      b.append(picture,el('span',{},`${a.clip.title}${a.clip.version!=null?` · v${a.clip.version}`:''}`),el('small',{},`${a.clip.projectTitle||a.project} · Frame ${a.frame}${a.owner?' · Owner':this.static?' · Yours':''}`));b.onclick=()=>this.jump(a);this.list.append(b);
+      b.append(picture,el('span',{},`${a.clip.title}${a.clip.version!=null?` · v${a.clip.version}`:''}`),el('small',{},`Frame ${a.frame}${a.owner?' · Owner':this.static?' · Yours':''} · ${a.clip.projectTitle||a.project}`));b.onclick=()=>this.jump(a);this.list.append(b);
     }
     this.highlightList();if(focus)this.list.querySelector(`[data-annotation="${CSS.escape(focus)}"]`)?.focus({preventScroll:true});
   }

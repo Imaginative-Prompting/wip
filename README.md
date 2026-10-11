@@ -139,6 +139,8 @@ their original clips in a thumbnail sidebar, with workspace saves, browser recov
 and image export. Public sites show published owner drawings while visitors keep
 private sketches in their own browsers. [Markup guide](docs/markup.md).
 
+![Example curve markup on a frame from The Way I Look At You, with editable handles and the marked-frame sidebar](docs/images/wip-markup.png)
+
 ## Documentation
 
 | Guide | What it covers |
