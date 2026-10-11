@@ -145,7 +145,7 @@ function mediaInBody(entry) {
       : el.tagName === "VIDEO" || /\.(mp4|webm|mov)(?:[?#]|$)/i.test(src) ? "video" : null;
     if (type) media.push({ src, type, poster: el.getAttribute("poster"),
       fps: Number(el.dataset.fps) || undefined,
-      title: el.closest("figure")?.querySelector("figcaption")?.textContent.trim() || el.textContent.trim() || entry.title });
+      title: (el.tagName === "A" ? el.textContent.trim() : "") || el.closest("figure")?.querySelector("figcaption")?.textContent.trim() || entry.title });
   }
   return media;
 }

@@ -48,6 +48,7 @@ taken at 1440 × 960 CSS pixels:
 
 - `images/wip-player.png`: play the current cut, seek to the Atlanta sequence
   around 2:41, pause, and leave its picture visible beside the production list.
+  Park a clip first, then open the dock clip picker to show the new navigation.
 - `images/wip-concepts.png`: hide the preview and select Concepts, leaving the
   real concept entries and persistent player visible.
 - `images/wip-films.png`: search for Atlanta at dawn, expand the original city
