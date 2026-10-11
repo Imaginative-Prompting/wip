@@ -126,7 +126,7 @@ kbd { font-family: inherit; color: var(--faint); font-size: 11px; }
 .now-art { display: grid; place-items: center; width: 46px; height: 46px; flex: none; font-size: 21px; color: var(--faint); background-position: center; background-size: cover; }
 #now-title { font-size: 12px; line-height: 1.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #now-subtitle { font-size: 10px; line-height: 1.6; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.transport { min-width: 0; }
+.transport { min-width: 0; container-type: inline-size; }
 .buttons { display: grid; grid-template-columns: 28px 30px 32px 30px 28px; align-items: center; justify-content: center; gap: 12px; height: 34px; position: relative; margin-bottom: 8px; }
 #back { grid-column: 2; }
 #play { grid-column: 3; }
@@ -163,13 +163,19 @@ input[type="range"] { accent-color: var(--ink); cursor: pointer; }
 .scrubber input { width: 100%; height: 2px; margin: 0; position: relative; z-index: 2; }
 .scrubber > span { width: 30px; }
 #duration { text-align: right; }
-.lyric { display: flex; justify-content: center; gap: 12px; font-size: 10px; color: var(--faint); text-align: center; height: 16px; padding-top: 5px; white-space: nowrap; }
-#lyric { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-#copy-frame { position: relative; flex: none; font: inherit; color: inherit; padding: 0 4px; max-width: 100%; white-space: nowrap; }
+.lyric { --frame-space: 120px; display: grid; grid-template-columns: var(--frame-space) minmax(0,1fr) var(--frame-space); column-gap: 12px; font-size: 10px; color: var(--faint); text-align: center; height: 16px; padding-top: 5px; white-space: nowrap; }
+#lyric { grid-column: 2; grid-row: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#copy-frame { grid-column: 3; grid-row: 1; position: relative; display: grid; grid-template-columns: auto 6ch 7ch; justify-content: end; column-gap: 4px; width: 100%; font: inherit; font-variant-numeric: tabular-nums; color: inherit; padding: 0; white-space: nowrap; text-align: right; }
+#frame-number,#frame-rate { overflow: hidden; text-overflow: ellipsis; }
 #copy-frame:is(:hover,:focus-visible) { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
-#copy-frame .control-tip { right: auto; left: 50%; transform: translate(-50%,3px); }
-#copy-frame:is(:hover,:focus-visible) .control-tip { visibility: visible; opacity: 1; transform: translate(-50%,0); }
-#frame-copy-status { color: var(--ink); }
+#copy-frame .control-tip { right: 0; left: auto; transform: translateY(3px); }
+#copy-frame:is(:hover,:focus-visible,[data-copied="true"]) .control-tip { visibility: visible; opacity: 1; transform: translateY(0); }
+#frame-copy-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+@container (max-width:440px) {
+ .lyric { --frame-space: 78px; }
+ #copy-frame { grid-template-columns: auto 6ch; }
+ #frame-rate { display: none; }
+}
 .options { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
 #volume { width: 64px; height: 2px; }
 .text-button { padding: 5px; color: var(--faint); font-size: 10px; }

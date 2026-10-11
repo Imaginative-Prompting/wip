@@ -742,12 +742,16 @@ const tickUI = () => {
   $("lyric").hidden = !$("lyric").textContent;
   $("copy-frame").hidden = !reference;
   if (reference) {
-    $("frame-number").textContent = `Frame ${reference.frame} · ${player.fps} fps`;
+    $("frame-number").textContent = reference.frame;
+    $("frame-rate").textContent = `· ${player.fps} fps`;
     $("copy-frame").setAttribute("aria-label", `Copy ${t.title || "clip"}, frame ${reference.frame}`);
   }
   const notice = reference?.text === copiedReference ? copyMessage : "";
-  if ($("frame-copy-status").textContent !== notice)
+  if ($("frame-copy-status").textContent !== notice) {
     $("frame-copy-status").textContent = notice;
+    $("frame-copy-tip").textContent = notice ? notice.replace(/^ · /, "") : "Click to copy clip and frame";
+    $("copy-frame").dataset.copied = String(!!notice);
+  }
   if (!player.preview && document.fullscreenElement === $("preview"))
     document.exitFullscreen().catch(() => {});
   $("preview").hidden = !player.preview && !document.fullscreenElement;

@@ -55,7 +55,9 @@ time, with a frame counter below the seek bar. Frame stepping uses the track's
 `fps` (or a media attachment/project's `fps`), defaulting to 30. Supply the actual rate
 for other footage, including fractional rates such as `24000 / 1001`. Song-clock
 excerpts step on their video frames while keeping the audio clock aligned.
-The frame counter stays available beside the lyrics whenever a video is selected,
+Lyrics stay centered below the seek bar, with the frame counter right-aligned
+in its own fixed-width space. Equal-width digits and copy feedback in the tooltip
+keep the footer still as values change. The counter is available whenever a video is selected,
 including after a normal pause or seek. It uses the presented video frame when
 available, and the clip timeline while the picture is hidden.
 Click the frame counter (or focus it and press Enter/Space) to copy the project,
