@@ -18,7 +18,7 @@ export class MarkupStorage extends EventTarget {
       }
       this.update(this.static?'Your drawings stay in this browser':'Saved in workspace');
       for(const p of this.pending.values())this.queue(p.record,p.base);
-    }catch(e){this.records=await this.all('records').catch(()=>[]);this.update(`${e.message}. Drawings are kept in this browser until retry.`);this.offline=true;}
+    }catch(e){this.records=this.db?await this.all('records').catch(()=>[]):[];this.update(`${e.message}. Drawings are kept in this browser until retry.`);this.offline=true;}
   }
   all(store){return request(this.db.transaction(store).objectStore(store).getAll());}
   write(store,value,remove=false){return new Promise((resolve,reject)=>{const tx=this.db.transaction(store,'readwrite');const s=tx.objectStore(store);remove?s.delete(value):s.put(clone(value));tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Storage was interrupted'));});}
@@ -26,7 +26,7 @@ export class MarkupStorage extends EventTarget {
   async save(record,base){
     this.replace(record);this.update('Saving…');
     try{
-      await this.write('records',record);
+      await this.write('records',record);this.unsaved=false;
       if(this.static){this.update('Saved in this browser');return;}
       const original=this.pending.get(record.id)?.base||base;
       const pending={id:record.id,record:clone(record),base:clone(original)};this.pending.set(record.id,pending);
