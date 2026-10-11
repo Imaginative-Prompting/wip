@@ -635,6 +635,60 @@ addEventListener("popstate", () => {
   revealHash();
 });
 addEventListener("hashchange", revealHash);
+let copiedReference = "", copyMessage = "", copyTimer;
+function frameReference() {
+  const track = player.track;
+  if (!player.stepping || !track?.video) return null;
+  const frame = Math.max(0, Math.round(videoPosition(track, player.time) * player.fps));
+  return {
+    frame,
+    text: [
+      `Project: ${track.projectTitle || track.project || "WIP"}`,
+      `Clip: ${track.title || "Untitled clip"}${track.version != null ? ` (v${track.version})` : ""}`,
+      `Frame: ${frame} (zero-based, ${player.fps} fps)`,
+      `Media: ${new URL(track.video, location.href).href}`,
+    ].join("\n"),
+  };
+}
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return;
+  } catch {
+    // Older browsers and restricted clipboard contexts can still allow a
+    // copy initiated directly by the user's click, including in fullscreen.
+    const focus = document.activeElement;
+    const field = make("textarea");
+    field.value = text;
+    field.readOnly = true;
+    field.style.cssText = "position:fixed;opacity:0;pointer-events:none;top:0;left:0";
+    (document.fullscreenElement || document.body).append(field);
+    try {
+      field.select();
+      if (!document.execCommand("copy")) throw new Error("Clipboard unavailable");
+    } finally {
+      field.remove();
+      focus?.focus({ preventScroll: true });
+    }
+  }
+}
+$("copy-frame").addEventListener("click", async () => {
+  // Snapshot the selected clip/frame before the asynchronous clipboard write.
+  const reference = frameReference();
+  if (!reference) return;
+  let message;
+  try {
+    await copyText(reference.text);
+    message = " · Copied";
+  } catch {
+    message = " · Copy failed — try again";
+  }
+  copiedReference = reference.text;
+  copyMessage = message;
+  clearTimeout(copyTimer);
+  copyTimer = setTimeout(() => { copiedReference = ""; tickUI(); }, 2000);
+  tickUI();
+});
 const tickUI = () => {
   const t = player.track,
     has = !!t,
@@ -683,8 +737,17 @@ const tickUI = () => {
     `${fmt(player.time)} of ${fmt(player.duration)}`,
   );
   const ln = t?.lines?.find((l) => l.t0 <= player.time && l.t1 > player.time);
-  $("lyric").textContent =
-    player.stepping ? `Frame ${Math.max(0, Math.round(videoPosition(t, player.time) * player.fps))} · ${player.fps} fps` : ln?.text || (t?.songEnd && player.time > t.songEnd ? "End screen" : "");
+  const reference = frameReference();
+  $("lyric").hidden = !!reference;
+  $("lyric").textContent = ln?.text || (t?.songEnd && player.time > t.songEnd ? "End screen" : "");
+  $("copy-frame").hidden = !reference;
+  if (reference) {
+    $("frame-number").textContent = `Frame ${reference.frame} · ${player.fps} fps`;
+    $("copy-frame").setAttribute("aria-label", `Copy ${t.title || "clip"}, frame ${reference.frame}`);
+  }
+  const notice = reference?.text === copiedReference ? copyMessage : "";
+  if ($("frame-copy-status").textContent !== notice)
+    $("frame-copy-status").textContent = notice;
   if (!player.preview && document.fullscreenElement === $("preview"))
     document.exitFullscreen().catch(() => {});
   $("preview").hidden = !player.preview && !document.fullscreenElement;

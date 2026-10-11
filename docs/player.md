@@ -55,6 +55,9 @@ time, with a frame counter below the seek bar. Frame stepping uses the track's
 `fps` (or a media attachment/project's `fps`), defaulting to 30. Supply the actual rate
 for other footage, including fractional rates such as `24000 / 1001`. Song-clock
 excerpts step on their video frames while keeping the audio clock aligned.
+Click the frame counter (or focus it and press Enter/Space) to copy the project,
+clip title/version, zero-based clip frame, FPS, and original media URL for an
+agent. A brief “Copied” confirmation leaves the selected clip and frame in place.
 
 The space bar / K toggle playback, F toggles
 theatre mode, Shift+F toggles true fullscreen, Escape leaves theatre mode, and /

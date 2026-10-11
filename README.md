@@ -76,6 +76,7 @@ to keep listening, then bring it back at the right point in the song.
 Switch WIPs, resume the current cut, or return to your last clip directly from
 the dock. The clip picker lists every audio/video clip, newest first, with search
 and scrolling. Step one second or one frame at a time to review a detail.
+Click the frame counter to copy the clip and frame reference for an agent.
 Drag the mini player to any corner and resize it. Theatre mode fills
 the page; the button at the bottom right of the picture opens true fullscreen.
 
