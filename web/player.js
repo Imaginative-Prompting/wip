@@ -107,6 +107,14 @@ export class Player extends EventTarget {
   get volume() {
     return this._volume;
   }
+  videoSource(src) {
+    if (this.video.crossOrigin !== "anonymous") return src;
+    // A pre-markup cached response may lack CORS headers. Use a stable capture
+    // variant for the media request, while retaining the original clip identity.
+    const url = new URL(src, location.href);
+    url.searchParams.set("wip-frame-capture", "1");
+    return url.href;
+  }
   load(track, { time = 0, autoplay = true, preview = !!track.video } = {}) {
     if (![track.audio, track.video, track.lite].filter(Boolean).every(allowedMedia))
       return;
@@ -131,7 +139,7 @@ export class Player extends EventTarget {
     this.video.muted = !!track.audio;
     if (track.video)
       this.video.src =
-        this.quality === "720" && track.lite ? track.lite : track.video;
+        this.videoSource(this.quality === "720" && track.lite ? track.lite : track.video);
     this.video.poster = track.poster || "";
     this.applyTime();
     this.configureSession();
@@ -262,7 +270,7 @@ export class Player extends EventTarget {
     const epoch = this.epoch;
     this.hasPicture = false;
     this.presentedTime = null;
-    this.video.src = src;
+    this.video.src = this.videoSource(src);
     this.video.addEventListener(
       "loadedmetadata",
       () => {
