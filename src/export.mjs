@@ -10,6 +10,7 @@ import { createReadStream } from "node:fs";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { listAnnotations, validateAnnotation } from "./annotations.mjs";
 import { appRoot, catalog, inside, atomic } from "./store.mjs";
 
 // The output contains only selected projects and content-addressed public media
@@ -23,6 +24,7 @@ export async function exportStatic(
     mediaBase = "/media/",
     transform = async (p) => p,
     resolveMedia,
+    annotationIds = [],
   } = {},
 ) {
   if (!projects?.length)
@@ -49,7 +51,15 @@ export async function exportStatic(
       entries: p.entries.map(strip),
     })),
   };
-  let serialized = JSON.stringify(clean);
+  const annotations = (await listAnnotations(c)).filter(a => annotationIds.includes(a.id));
+  if (annotations.length !== annotationIds.length) throw new Error("Unknown annotation ID");
+  for (const a of annotations) {
+    validateAnnotation(a);
+    if (!projects.includes(a.project)) throw new Error("Annotation project is not allowlisted");
+  }
+  // Owner annotations are opt-in. Private workspace drawings never ride along implicitly.
+  const ownerRecords = annotations.map(({sourceStamp,sourceChanged, ...a}) => a);
+  let serialized = JSON.stringify({...clean, annotations:ownerRecords});
   const refs = [
     ...new Set(
       [...serialized.matchAll(/\/media\/[a-z0-9_-]+\/[^\s"'<>\\)]+/g)].map(
@@ -137,7 +147,10 @@ export async function exportStatic(
     '<html lang="en" data-mode="static">',
   );
   await writeFile(path.join(out, "index.html"), index);
-  await writeFile(path.join(out, "workspace.json"), serialized + "\n");
+  const published = JSON.parse(serialized);
+  await writeFile(path.join(out, "annotations.json"), JSON.stringify({records:published.annotations}) + "\n");
+  delete published.annotations;
+  await writeFile(path.join(out, "workspace.json"), JSON.stringify(published) + "\n");
   return {
     projects: clean.projects.map((p) => ({
       id: p.id,

@@ -130,12 +130,22 @@ WIP also powers the work-in-progress collection at
 film workspace; production media is not included in the standalone example.
 The hosted collection is public and can be explored without signing in.
 
+
+## Frame markup
+
+Draw directly on a paused video frame. Keep rough strokes or turn them into editable
+Bézier curves; add constrained shapes and arrows. Marked frames stay attached to
+their original clips in a thumbnail sidebar, with workspace saves, browser recovery,
+and image export. Public sites show published owner drawings while visitors keep
+private sketches in their own browsers. [Markup guide](docs/markup.md).
+
 ## Documentation
 
 | Guide | What it covers |
 | :--- | :--- |
 | [Set up a workspace](docs/getting-started.md) | Configuration, project folders, your first entry, and local media |
 | [Content contract](docs/content.md) | Entry schema, revision-safe writes, imports, and privacy rules |
+| [Draw on a frame](docs/markup.md) | Freehand, editable curves, saved frames and owner/visitor annotations |
 | [Player and current cut](docs/player.md) | Shared transport, paired media, timing, and keyboard controls |
 | [Static export](docs/exporting.md) | Project allowlists, media manifests, and hosting boundaries |
 | [Development](docs/development.md) | Source map, checks, and screenshot capture notes |

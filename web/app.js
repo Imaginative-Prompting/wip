@@ -3,6 +3,7 @@ import DOMPurify from "./vendor/purify.js";
 import { Player, fmt, videoPosition } from "./player.js";
 import { sameTrack } from "./playback-history.js";
 import { collectClips, trackFor } from "./clips.js";
+import { Markup } from "./markup.js";
 import { PreviewWindow } from "./preview-window.js";
 const $ = (id) => document.getElementById(id);
 const BASE = new URL("./", import.meta.url).pathname;
@@ -689,6 +690,7 @@ $("copy-frame").addEventListener("click", async () => {
   copyTimer = setTimeout(() => { copiedReference = ""; tickUI(); }, 2000);
   tickUI();
 });
+const markup = new Markup(player, previewWindow, {base:BASE, staticMode:STATIC, copyText});
 const tickUI = () => {
   const t = player.track,
     has = !!t,

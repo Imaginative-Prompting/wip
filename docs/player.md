@@ -70,6 +70,13 @@ focuses search. Playback is restored paused after a reload, with the picture vis
 Browser autoplay rules still apply. New cut versions never replace an actively
 playing version without an explicit selection.
 
+## Frame markup
+
+Hover over the picture and choose the pencil to draw on a paused frame. Rough
+strokes, editable smooth curves, shapes, undo and a persistent marked-frame
+sidebar work in the same player. See [Draw on a frame](markup.md) for controls,
+agent-readable files and owner/visitor publishing.
+
 ## Save the current cut
 
 Save the track object above in a working JSON file. For the first cut:

@@ -46,7 +46,7 @@ export class PreviewWindow {
     this.layout();
   }
   viewport() {
-    return { width: innerWidth, height: Math.max(1, innerHeight - this.dock.getBoundingClientRect().height) };
+    return { width: innerWidth - (this.reserved?.left || 0), height: Math.max(1, innerHeight - this.dock.getBoundingClientRect().height - (this.reserved?.bottom || 0)) };
   }
   layout() {
     if (this.drag) return;
@@ -57,7 +57,7 @@ export class PreviewWindow {
     this.resize.title = "Drag to resize · arrow keys to adjust";
   }
   draw(rect) {
-    this.el.style.setProperty("--preview-x", `${rect.x}px`);
+    this.el.style.setProperty("--preview-x", `${rect.x + (this.reserved?.left || 0)}px`);
     this.el.style.setProperty("--preview-y", `${rect.y}px`);
     this.el.style.setProperty("--preview-width", `${rect.width}px`);
   }

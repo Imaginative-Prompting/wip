@@ -12,6 +12,7 @@ import {
   projectDir,
   slug,
 } from "../src/store.mjs";
+import { listAnnotations } from "../src/annotations.mjs";
 import { start } from "../src/server.mjs";
 
 const [command = "help", ...args] = process.argv.slice(2);
@@ -31,16 +32,19 @@ try {
   wip project --id project-id --title "Project name" [--config wip.json]
   wip get --project project-id --id entry-id [--config wip.json]
   wip put --project project-id --file entry.json [--expected 3] [--config wip.json]
+  wip annotations [--config wip.json] [--project project-id]
   wip current --project project-id --file track.json [--expected 2] [--config wip.json]
 
 Existing entries/current cuts REQUIRE --expected with the revision you read.
-The server is read-only; agents write through the CLI or the documented files.`);
+Content writes use the CLI. The local server also saves frame annotations.`);
   } else {
     const c = await config(flags.config);
     const expected =
       flags.expected == null ? undefined : Number(flags.expected);
     if (command === "serve")
       await start(c, flags.port == null ? undefined : Number(flags.port));
+    else if (command === "annotations")
+      console.log(JSON.stringify((await listAnnotations(c)).filter(a => !flags.project || a.project === flags.project), null, 2));
     else if (command === "list")
       console.log(JSON.stringify(await catalog(c), null, 2));
     else if (command === "validate") {

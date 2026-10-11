@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { appRoot, catalog, hash, inside } from "./store.mjs";
 
+import { listAnnotations, saveAnnotation, annotationRefs, sourceStamp } from "./annotations.mjs";
 import { mediaRefs } from "./privacy.mjs";
 
 const types = {
@@ -48,15 +49,17 @@ export async function start(c, requestedPort) {
   let data = await catalog(c),
     signature = hash(data),
     timer;
-  let allowedMedia = new Set(mediaRefs(data));
+  let annotations = await listAnnotations(c);
+  let allowedMedia = new Set([...mediaRefs(data), ...annotationRefs(annotations)]);
   const clients = new Set();
   const refresh = async () => {
     try {
+      annotations = await listAnnotations(c);
       const next = await catalog(c),
         sig = hash(next);
       if (sig !== signature) {
         data = next;
-        allowedMedia = new Set(mediaRefs(next));
+        allowedMedia = new Set([...mediaRefs(next), ...annotationRefs(annotations)]);
         signature = sig;
         for (const r of clients) r.write(`event: change\ndata: ${sig}\n\n`);
       }
@@ -83,6 +86,29 @@ export async function start(c, requestedPort) {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "no-referrer");
     res.setHeader("Cache-Control", "no-cache");
+    if (req.url?.split("?")[0] === "/api/annotations") {
+      try {
+        if (req.method === "GET") {
+          annotations = await listAnnotations(c);
+          allowedMedia = new Set([...mediaRefs(data), ...annotationRefs(annotations)]);
+          const records = await Promise.all(annotations.map(async a => ({...a, sourceChanged: !!a.sourceStamp && a.sourceStamp !== await sourceStamp(c,a.clip)})));
+          res.writeHead(200, {"Content-Type":"application/json"}).end(JSON.stringify({records}));
+        } else if (req.method === "PUT") {
+          if (req.headers.origin !== `http://${req.headers.host}` || req.headers["sec-fetch-site"] === "cross-site") { res.writeHead(403).end("Same-origin requests only"); return; }
+          if (req.headers["content-type"] !== "application/json") { res.writeHead(415).end(); return; }
+          let bytes = 0; const chunks = [];
+          for await (const chunk of req) { bytes += chunk.length; if (bytes > 2000000) { res.writeHead(413).end("Annotation too large"); return; } chunks.push(chunk); }
+          const {record, expected} = JSON.parse(Buffer.concat(chunks).toString());
+          annotations = await listAnnotations(c);
+          const allowed = new Set([...mediaRefs(data), ...annotationRefs(annotations)]);
+          // Remote catalog media is also valid; mediaRefs intentionally only extracts local URLs.
+          const collect = value => { if (typeof value === "string" && /^https?:\/\//.test(value)) allowed.add(value); else if (value && typeof value === "object") Object.values(value).forEach(collect); }; collect(data);
+          const saved = await saveAnnotation(c,record,expected,allowed);
+          res.writeHead(200, {"Content-Type":"application/json"}).end(JSON.stringify(saved));
+        } else res.writeHead(405,{Allow:"GET, PUT"}).end();
+      } catch(e) { res.writeHead(/Revision conflict|Another writer/.test(e.message)?409:400,{"Content-Type":"application/json"}).end(JSON.stringify({error:e.message})); }
+      return;
+    }
     if (!["GET", "HEAD"].includes(req.method)) {
       res.writeHead(405, { Allow: "GET, HEAD" }).end();
       return;
