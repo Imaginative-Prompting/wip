@@ -163,9 +163,9 @@ input[type="range"] { accent-color: var(--ink); cursor: pointer; }
 .scrubber input { width: 100%; height: 2px; margin: 0; position: relative; z-index: 2; }
 .scrubber > span { width: 30px; }
 #duration { text-align: right; }
-.lyric { font-size: 10px; color: var(--faint); text-align: center; height: 16px; padding-top: 5px; white-space: nowrap; }
-#lyric { display: block; overflow: hidden; text-overflow: ellipsis; }
-#copy-frame { position: relative; font: inherit; color: inherit; padding: 0 4px; max-width: 100%; white-space: nowrap; }
+.lyric { display: flex; justify-content: center; gap: 12px; font-size: 10px; color: var(--faint); text-align: center; height: 16px; padding-top: 5px; white-space: nowrap; }
+#lyric { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#copy-frame { position: relative; flex: none; font: inherit; color: inherit; padding: 0 4px; max-width: 100%; white-space: nowrap; }
 #copy-frame:is(:hover,:focus-visible) { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 #copy-frame .control-tip { right: auto; left: 50%; transform: translate(-50%,3px); }
 #copy-frame:is(:hover,:focus-visible) .control-tip { visibility: visible; opacity: 1; transform: translate(-50%,0); }

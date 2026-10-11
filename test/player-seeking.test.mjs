@@ -15,6 +15,7 @@ class Media extends EventTarget {
     this.readyState = 1;
   }
   get currentTime() { return this.time; }
+  requestVideoFrameCallback(callback) { this.present = callback; }
   load() { this.readyState = 0; }
   pause() { this.paused = true; }
   play() { this.paused = false; return Promise.resolve(); }
@@ -75,4 +76,36 @@ test("the initial loading state resets for quality changes and new tracks, not o
   assert.equal(player.hasPicture, false);
   video.decode();
   assert.equal(player.hasPicture, true);
+});
+
+
+test("frame references follow the presented picture on pause and the containing frame after a seek", (t) => {
+  const { player, video } = setup(t);
+  player.seek(3.03);
+  assert.equal(player.stepping, false);
+  assert.equal(player.frame, 72); // 3.03 is inside frame 72 at 24 fps, not 73.
+  video.decode();
+  video.present(0, { mediaTime: 73 / 24 });
+  assert.equal(player.frame, 73); // Prefer the picture actually presented.
+  player.stepFrame(1);
+  assert.equal(player.frame, 74); // Step from that picture, not a lagging audio clock.
+  player.seek(5.03);
+  assert.equal(player.frame, 120); // An old decoded frame cannot survive a seek.
+  video.present(0, { mediaTime: 5 });
+  player.showPreview(false);
+  player.seek(6.03);
+  assert.equal(player.frame, 144); // A hidden preview must not pin the counter.
+  player.seek(12);
+  assert.equal(player.frame, 287); // Duration is past the final frame boundary.
+});
+
+test("frame references for song-clock excerpts are relative to the clip", (t) => {
+  const { player } = setup(t);
+  player.track.offset = 42;
+  player.track.duration = 120;
+  player.showPreview(false);
+  player.seek(43.03);
+  assert.equal(player.frame, 24);
+  player.showPreview(true);
+  assert.equal(player.frame, 24);
 });

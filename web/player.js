@@ -26,6 +26,7 @@ export class Player extends EventTarget {
     this.tail = null;
     this.stepping = false;
     this.hasPicture = false;
+    this.presentedTime = null;
     this.error = "";
     this.epoch = 0;
     for (const m of [audio, video]) {
@@ -53,6 +54,17 @@ export class Player extends EventTarget {
       this.hasPicture = true;
       this.update();
     });
+    video.addEventListener("seeking", () => { this.presentedTime = null; });
+    if (video.requestVideoFrameCallback) {
+      const presented = (_, { mediaTime }) => {
+        if (!video.seeking) {
+          this.presentedTime = mediaTime;
+          if (!this.playing) this.update(false);
+        }
+        video.requestVideoFrameCallback(presented);
+      };
+      video.requestVideoFrameCallback(presented);
+    }
     this.timer = setInterval(() => this.tick(), 150);
     let saved = {};
     try {
@@ -107,6 +119,7 @@ export class Player extends EventTarget {
     this.stepping = false;
     this.error = "";
     this.hasPicture = false;
+    this.presentedTime = null;
     this.track = { ...track };
     this.time = Math.max(0, time);
     this.preview = preview && !!track.video;
@@ -127,6 +140,7 @@ export class Player extends EventTarget {
   }
   applyTime() {
     if (!this.track) return;
+    this.presentedTime = null;
     if (this.track.audio && this.audio.readyState >= 1) {
       const d = this.audio.duration;
       this.audio.currentTime = Math.min(
@@ -211,12 +225,25 @@ export class Player extends EventTarget {
     const fps = Number(this.track?.fps);
     return Number.isFinite(fps) && fps > 0 && fps <= 240 ? fps : 30;
   }
+  get frame() {
+    const shown = this.preview && !this.video.seeking && this.presentedTime != null;
+    const time = shown ? this.presentedTime
+      : this.preview && this.video.readyState >= 1 ? this.video.currentTime
+      : videoPosition(this.track, this.time);
+    // A presented timestamp names a frame. An arbitrary seek time falls inside
+    // one: rounding that time could incorrectly select the following frame.
+    const frame = shown ? Math.round(time * this.fps) : Math.floor(time * this.fps + .0001);
+    const last = Number.isFinite(this.video.duration)
+      ? Math.max(0, Math.ceil(this.video.duration * this.fps) - 1) : Infinity;
+    return Math.max(0, Math.min(frame, last));
+  }
   stepFrame(direction) {
     if (!this.track?.video) return;
     this.pause();
+    const time = this.frame / this.fps + (this.track.offset || 0);
     // Reveal the picture without first seeking back to the previous frame.
     this.preview = true;
-    this.seek(frameTime(this.time, direction, this.fps, this.track.offset || 0,
+    this.seek(frameTime(time, direction, this.fps, this.track.offset || 0,
       Number.isFinite(this.video.duration) ? this.video.duration : Infinity), { frame: true });
   }
   showPreview(on) {
@@ -234,6 +261,7 @@ export class Player extends EventTarget {
       q === "720" && this.track.lite ? this.track.lite : this.track.video;
     const epoch = this.epoch;
     this.hasPicture = false;
+    this.presentedTime = null;
     this.video.src = src;
     this.video.addEventListener(
       "loadedmetadata",
@@ -267,6 +295,7 @@ export class Player extends EventTarget {
     }
     const drift = this.video.currentTime - t;
     if ((force && Math.abs(drift) > 0.02) || Math.abs(drift) > 0.18) {
+      this.presentedTime = null;
       this.video.currentTime = t;
       this.video.playbackRate = 1;
     } else

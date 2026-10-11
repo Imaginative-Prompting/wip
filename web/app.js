@@ -638,8 +638,8 @@ addEventListener("hashchange", revealHash);
 let copiedReference = "", copyMessage = "", copyTimer;
 function frameReference() {
   const track = player.track;
-  if (!player.stepping || !track?.video) return null;
-  const frame = Math.max(0, Math.round(videoPosition(track, player.time) * player.fps));
+  if (!track?.video) return null;
+  const frame = player.frame;
   return {
     frame,
     text: [
@@ -738,8 +738,8 @@ const tickUI = () => {
   );
   const ln = t?.lines?.find((l) => l.t0 <= player.time && l.t1 > player.time);
   const reference = frameReference();
-  $("lyric").hidden = !!reference;
   $("lyric").textContent = ln?.text || (t?.songEnd && player.time > t.songEnd ? "End screen" : "");
+  $("lyric").hidden = !$("lyric").textContent;
   $("copy-frame").hidden = !reference;
   if (reference) {
     $("frame-number").textContent = `Frame ${reference.frame} · ${player.fps} fps`;
