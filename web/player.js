@@ -1,3 +1,4 @@
+import { PlaybackHistory, allowedMedia } from "./playback-history.js";
 export const fmt = (s) =>
   `${Math.floor(Math.max(0, s || 0) / 60)}:${String(Math.floor(Math.max(0, s || 0) % 60)).padStart(2, "0")}`;
 export function durationOf(track, audioDuration, videoDuration) {
@@ -6,9 +7,6 @@ export function durationOf(track, audioDuration, videoDuration) {
 export function videoPosition(track, time) {
   return time - (track?.offset || 0);
 }
-const allowed = (url) =>
-  typeof url === "string" &&
-  (/^\/media\//.test(url) || /^https?:\/\//.test(url));
 export class Player extends EventTarget {
   constructor(audio, video) {
     super();
@@ -49,6 +47,7 @@ export class Player extends EventTarget {
     try {
       saved = JSON.parse(localStorage.getItem("wip-player") || "{}");
     } catch {}
+    this.history = new PlaybackHistory(saved.history);
     this.repeat = saved.repeat ?? true;
     this.quality = saved.quality || "720";
     this.volume = saved.volume ?? 1;
@@ -57,12 +56,12 @@ export class Player extends EventTarget {
       (saved.track.audio || saved.track.video) &&
       [saved.track.audio, saved.track.video, saved.track.lite]
         .filter(Boolean)
-        .every(allowed)
+        .every(allowedMedia)
     )
       this.load(saved.track, {
         time: saved.time || 0,
         autoplay: false,
-        preview: false,
+        preview: saved.preview ?? false,
       });
     addEventListener("pagehide", () => this.save());
     this.configureSession();
@@ -86,8 +85,9 @@ export class Player extends EventTarget {
     return this._volume;
   }
   load(track, { time = 0, autoplay = true, preview = !!track.video } = {}) {
-    if (![track.audio, track.video, track.lite].filter(Boolean).every(allowed))
+    if (![track.audio, track.video, track.lite].filter(Boolean).every(allowedMedia))
       return;
+    this.history.remember(this.track, this.time, this.preview);
     this.epoch++;
     this.audio.pause();
     this.video.pause();
@@ -302,12 +302,15 @@ export class Player extends EventTarget {
   }
   save() {
     this.savedAt = Date.now();
+    this.history.remember(this.track, this.time, this.preview);
     try {
       localStorage.setItem(
         "wip-player",
         JSON.stringify({
+          history: this.history,
           track: this.track,
           time: this.time,
+          preview: this.preview,
           repeat: this.repeat,
           quality: this.quality,
           volume: this.volume,

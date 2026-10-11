@@ -27,8 +27,8 @@ studies, prototypes, or a collection of things you want to review.
 | :--- | :--- |
 | **A simple list** | Expand the work you want to see. Keep the rest out of the way. |
 | **Search and tags** | Search titles, notes, and written content. Click a tag to find renders, concepts, audio, or your own categories. |
-| **One persistent player** | Keep listening as you browse. Show the synchronized picture when you need it, or watch fullscreen. |
-| **The current cut** | Give the latest version a clear home without losing the attempts that came before it. |
+| **One persistent player** | Keep listening as you browse. Resize the picture, snap it to a corner, or watch in theatre mode or fullscreen. |
+| **The current cut** | Jump to the latest cut from the dock, then return to your last clip at its saved position. |
 | **Files you own** | One file per entry. Media stays in your project folders. Agents write through a CLI with revision checks. |
 | **An optional static site** | Export explicitly selected projects for hosting. Local edits never publish themselves. |
 
@@ -73,15 +73,20 @@ The bottom player stays with you as you search, filter, and open entries. When
 an audio track is paired with video, audio is the master clock. Hide the picture
 to keep listening, then bring it back at the right point in the song.
 
-Repeat, seeking, chapter markers, optional lighter video, and fullscreen all
-use the same player. A new current-cut version waits for your selection instead
+Switch WIPs, resume the current cut, or return to your last clip directly from
+the dock. Drag the mini player to any corner and resize it. Theatre mode fills
+the page; the button at the bottom right of the picture opens true fullscreen.
+
+Repeat, seeking, chapter markers, and optional lighter video all use the same player. A new current-cut version waits for your selection instead
 of interrupting the version you are playing.
 
 | Key | Action |
 | :--- | :--- |
 | <kbd>Space</kbd> / <kbd>K</kbd> | Play or pause |
 | <kbd>←</kbd> / <kbd>→</kbd> | Seek five seconds |
-| <kbd>F</kbd> | Toggle fullscreen |
+| <kbd>F</kbd> | Toggle theatre mode |
+| <kbd>Shift</kbd> + <kbd>F</kbd> | Toggle true fullscreen |
+| <kbd>Esc</kbd> | Leave theatre mode |
 | <kbd>/</kbd> | Focus search |
 
 See the [player guide](docs/player.md) for paired tracks, song-clock excerpts,

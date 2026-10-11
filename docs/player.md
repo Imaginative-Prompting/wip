@@ -6,7 +6,22 @@ Every audio/video item opens in the bottom player. Paired tracks use `audio` as
 the master clock and a muted `video` as the optional picture. Hiding the preview
 pauses the video decoding while audio continues. A video without a separate
 audio file uses its own soundtrack. Seeking and video quality changes retain the
-timeline. Fullscreen uses the same player, with its exit control at bottom right.
+timeline.
+
+The dock's **Current cut** button (or **Soundtrack** for audio-only projects)
+resumes the selected project's latest cut in one click. **Back to clip** returns
+to its last clip at the position you left. Each project keeps separate cut and
+clip positions, including across reloads. Use the project selector in the dock
+to switch WIPs without stopping playback or losing the clip you were reviewing.
+
+Drag the mini preview by its title to snap it to any corner above the dock. Drag
+the diagonal handle at its free corner to resize it; size and corner are saved.
+The move handle also accepts arrow keys to choose a corner, and the resize
+handle accepts arrow keys to grow or shrink the picture.
+
+The dock's **Theatre mode** button fills the page while keeping browser chrome
+visible. Use the fullscreen button at the **bottom right of the picture** for
+true fullscreen; the same button exits. Both modes use the same player.
 
 ```json
 {
@@ -28,8 +43,9 @@ picture through that silent tail before repeating. For a video excerpt on its
 project's song clock, attach `songClock: true` and `offset` in seconds to its
 entry media. Never guess an offset for an edited Short or a clip with its own mix.
 
-The space bar / K toggle playback, arrow keys seek five seconds, F opens
-fullscreen, and / focuses search. Playback is restored paused after a reload.
+The space bar / K toggle playback, arrow keys seek five seconds, F toggles
+theatre mode, Shift+F toggles true fullscreen, Escape leaves theatre mode, and /
+focuses search. Playback is restored paused after a reload, with the picture visibility retained.
 Browser autoplay rules still apply. New cut versions never replace an actively
 playing version without an explicit selection.
 

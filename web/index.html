@@ -62,18 +62,22 @@
       <video id="video" playsinline preload="metadata"></video>
       <div id="preview-message" role="status"></div>
       <div class="preview-label">
-        <span id="preview-title"></span
+        <button id="move-preview" class="preview-move" aria-label="Move video preview"><span aria-hidden="true">⠿</span> <span id="preview-title"></span></button
         ><button id="hide-preview" class="icon" aria-label="Hide video preview">
           ×
         </button>
       </div>
+      <button id="video-fullscreen" class="icon video-fullscreen" aria-label="Enter fullscreen" title="Fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
+      <button id="resize-preview" class="preview-resize" aria-label="Resize video preview"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="m5 17 12-12m-6 12 6-6"/></svg></button>
     </section>
     <footer id="dock" class="dock" aria-label="Player">
       <div class="now">
         <div id="now-art" class="now-art" aria-hidden="true">♪</div>
         <div>
+          <select id="dock-projects" aria-label="Switch WIP"></select>
           <div id="now-title">Nothing playing</div>
           <div id="now-subtitle">Choose something to play</div>
+          <div class="track-switch"><button id="current-track" aria-pressed="false" disabled>Current cut</button><button id="return-clip" aria-pressed="false" hidden>Back to clip</button></div>
         </div>
       </div>
       <div class="transport">
@@ -147,13 +151,14 @@
         >
           ▣</button
         ><button
-          id="fullscreen"
+          id="theatre"
           class="icon"
-          aria-label="Enter fullscreen"
+          aria-label="Enter theatre mode"
+          aria-pressed="false"
           disabled
-          title="Fullscreen"
+          title="Theatre mode"
         >
-          ⛶
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="1"/><path d="M2 16h20"/></svg>
         </button>
       </div>
     </footer>

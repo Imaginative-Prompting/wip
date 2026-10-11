@@ -1,6 +1,8 @@
 import { marked } from "./vendor/marked.js";
 import DOMPurify from "./vendor/purify.js";
 import { Player, fmt, videoPosition } from "./player.js";
+import { sameTrack } from "./playback-history.js";
+import { PreviewWindow } from "./preview-window.js";
 const $ = (id) => document.getElementById(id);
 const BASE = new URL("./", import.meta.url).pathname;
 const STATIC = document.documentElement.dataset.mode === "static";
@@ -12,6 +14,7 @@ const make = (tag, cls, text) => {
   return e;
 };
 const player = new Player($("audio"), $("video"));
+const previewWindow = new PreviewWindow($("preview"), $("dock"), $("move-preview"), $("resize-preview"));
 let data,
   project = "all",
   query = "",
@@ -85,23 +88,42 @@ function currentFor(p) {
       ? { ...p.song, id: `${p.id}:song`, project: p.id, projectTitle: p.title }
       : null;
 }
-function loadTrack(track, preview = true) {
-  const same = player.track?.id === track.id;
-  if (
-    same &&
-    player.track?.version === track.version &&
-    player.track?.video === track.video &&
-    player.track?.audio === track.audio
-  ) {
+function loadTrack(track, preview = true, time) {
+  if (sameTrack(player.track, track)) {
     player.showPreview(preview);
+    if (time != null) player.seek(time);
     player.play();
-  } else
-    player.load(track, {
-      time: same ? player.time : 0,
-      preview,
-      autoplay: true,
-    });
+  } else player.load(track, {
+    time: time ?? (player.track?.id === track.id ? player.time : player.history.position(track)),
+    preview, autoplay: true,
+  });
 }
+function dockProject() {
+  return data?.projects.find((p) => p.id === (project === "all" ? player.track?.project : project))
+    || (data?.projects.length === 1 ? data.projects[0] : null);
+}
+function updateTrackSwitch() {
+  const p = dockProject(), current = p && currentFor(p);
+  const clip = p && player.history.get(p.id, "clip");
+  const isCurrent = sameTrack(player.track, current);
+  $("current-track").disabled = !current;
+  $("current-track").textContent = p?.current ? "Current cut" : p?.song ? "Soundtrack" : "Current cut";
+  $("current-track").setAttribute("aria-pressed", String(isCurrent));
+  $("current-track").title = current ? `Resume ${p.current ? "current cut" : "soundtrack"} · ${p.title}` : "Select a WIP with a current cut or soundtrack";
+  $("return-clip").hidden = !clip;
+  const isClip = !!clip && sameTrack(player.track, clip.track);
+  $("return-clip").textContent = isClip ? "Clip" : "Back to clip";
+  $("return-clip").setAttribute("aria-pressed", String(isClip));
+  $("return-clip").title = clip ? `Resume ${clip.track.title} at ${fmt(isClip ? player.time : clip.time)}` : "";
+}
+$("current-track").addEventListener("click", () => {
+  const p = dockProject(), track = p && currentFor(p);
+  if (track) loadTrack(track, !!track.video);
+});
+$("return-clip").addEventListener("click", () => {
+  const p = dockProject(), clip = p && player.history.get(p.id, "clip");
+  if (clip) loadTrack(clip.track, clip.preview, sameTrack(player.track, clip.track) ? player.time : clip.time);
+});
 function renderCurrent() {
   const p = data.projects.find((p) => p.id === project),
     box = $("current");
@@ -432,6 +454,8 @@ function render() {
     : `${data.projects.length} projects. Every idea, attempt, and next version, together.`;
   document.title = `${p ? p.title : "WIP"} · WIP`;
   $("projects").value = project;
+  $("dock-projects").value = project;
+  updateTrackSwitch();
   renderCurrent();
   const all = ps.flatMap((p) => p.entries.map((e) => ({ p, e })));
   const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
@@ -489,6 +513,7 @@ async function refresh() {
     o.value = p.id;
     $("projects").append(o);
   }
+  $("dock-projects").replaceChildren(...[...$("projects").options].map((o) => o.cloneNode(true)));
   if (project !== "all" && !data.projects.some((p) => p.id === project))
     project = "all";
   render();
@@ -513,13 +538,15 @@ function revealHash() {
     rememberOpen();
   }
 }
-$("projects").addEventListener("change", () => {
-  project = $("projects").value;
+function selectProject(value) {
+  project = value;
   location.hash = "";
   syncURL(false);
   render();
   window.scrollTo(0, 0);
-});
+}
+$("projects").addEventListener("change", () => selectProject($("projects").value));
+$("dock-projects").addEventListener("change", () => selectProject($("dock-projects").value));
 $("search").addEventListener("input", () => {
   query = $("search").value;
   syncURL();
@@ -560,7 +587,13 @@ const tickUI = () => {
   $("back").disabled = !has;
   $("forward").disabled = !has;
   $("show-preview").disabled = !t?.video;
-  $("fullscreen").disabled = !t?.video;
+  $("theatre").disabled = !t?.video;
+  if (!player.preview && previewWindow.theatre) previewWindow.setTheatre(false);
+  $("theatre").setAttribute("aria-pressed", String(previewWindow.theatre));
+  $("theatre").setAttribute("aria-label", previewWindow.theatre ? "Exit theatre mode" : "Enter theatre mode");
+  $("theatre").title = previewWindow.theatre ? "Exit theatre mode" : "Theatre mode";
+  $("hide-preview").setAttribute("aria-label", previewWindow.theatre ? "Return to mini player" : "Hide video preview");
+  updateTrackSwitch();
   $("repeat").setAttribute("aria-pressed", String(player.repeat));
   const repeatTip = player.repeat ? "Repeating · turn off" : "Repeat off · turn on";
   if ($("repeat-tip").textContent !== repeatTip)
@@ -589,7 +622,9 @@ const tickUI = () => {
   const ln = t?.lines?.find((l) => l.t0 <= player.time && l.t1 > player.time);
   $("lyric").textContent =
     ln?.text || (t?.songEnd && player.time > t.songEnd ? "End screen" : "");
-  $("preview").hidden = !player.preview;
+  if (!player.preview && document.fullscreenElement === $("preview"))
+    document.exitFullscreen().catch(() => {});
+  $("preview").hidden = !player.preview && !document.fullscreenElement;
   $("preview-title").textContent = t?.title || "";
   const vt = videoPosition(t, player.time);
   $("preview-message").textContent =
@@ -685,7 +720,10 @@ $("seek").addEventListener("pointerleave", () => ($("seek-tip").hidden = true));
 $("show-preview").addEventListener("click", () =>
   player.showPreview(!player.preview),
 );
-$("hide-preview").addEventListener("click", () => player.showPreview(false));
+$("hide-preview").addEventListener("click", () => {
+  if (previewWindow.theatre) { previewWindow.setTheatre(false); tickUI(); }
+  else player.showPreview(false);
+});
 $("quality").addEventListener("click", () =>
   player.setQuality(player.quality === "720" ? "1080" : "720"),
 );
@@ -701,17 +739,29 @@ async function fullscreen() {
     }
   }
 }
-$("fullscreen").addEventListener("click", fullscreen);
-$("video").addEventListener("dblclick", fullscreen);
+async function theatre() {
+  if (document.fullscreenElement) await document.exitFullscreen();
+  player.showPreview(true);
+  previewWindow.setTheatre(!previewWindow.theatre);
+  tickUI();
+}
+$("theatre").addEventListener("click", theatre);
+$("video-fullscreen").addEventListener("click", fullscreen);
+$("video").addEventListener("dblclick", theatre);
 $("video").addEventListener("click", () => player.toggle());
 document.addEventListener("fullscreenchange", () => {
   const fs = !!document.fullscreenElement;
   (fs ? $("preview") : document.body).append($("dock"));
-  $("fullscreen").setAttribute(
+  $("video-fullscreen").setAttribute(
     "aria-label",
     fs ? "Exit fullscreen" : "Enter fullscreen",
   );
-  $("fullscreen").title = fs ? "Exit fullscreen" : "Fullscreen";
+  $("video-fullscreen").title = fs ? "Exit fullscreen" : "Fullscreen";
+  $("video-fullscreen").querySelector("path").setAttribute("d", fs
+    ? "M3 8h5V3m8 0v5h5M3 16h5v5m8 0v-5h5"
+    : "M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5");
+  previewWindow.layout();
+  awake();
   $("preview").classList.remove("hide-controls");
 });
 let idle;
@@ -722,7 +772,7 @@ const awake = () => {
     if (
       document.fullscreenElement &&
       player.playing &&
-      !$("dock").contains(document.activeElement)
+      !$("preview").contains(document.activeElement)
     )
       $("preview").classList.add("hide-controls");
   }, 2500);
@@ -730,6 +780,7 @@ const awake = () => {
 $("preview").addEventListener("pointermove", awake);
 $("preview").addEventListener("focusin", awake);
 document.addEventListener("keydown", (e) => {
+  if (e.defaultPrevented) return;
   if (
     e.target.closest("input,textarea,select,[contenteditable]") ||
     $("lightbox").open
@@ -744,7 +795,12 @@ document.addEventListener("keydown", (e) => {
   ) {
     e.preventDefault();
     player.toggle();
-  } else if (e.key.toLowerCase() === "f" && player.track?.video) fullscreen();
+  } else if (e.key === "Escape" && previewWindow.theatre && !document.fullscreenElement) {
+    previewWindow.setTheatre(false); tickUI();
+  } else if (e.key.toLowerCase() === "f" && player.track?.video) {
+    e.preventDefault();
+    e.shiftKey ? fullscreen() : theatre();
+  }
   else if (e.key === "ArrowLeft") player.seek(player.time - 5);
   else if (e.key === "ArrowRight") player.seek(player.time + 5);
   awake();
