@@ -188,6 +188,8 @@ export class Player extends EventTarget {
       if (this.track.audio) this.syncVideo(true);
     } catch (e) {
       if (epoch !== this.epoch) return;
+      // Pausing to draw can intentionally cancel an unresolved play request.
+      if (e.name === "AbortError" && !this.playing) return;
       this.playing = false;
       this.error =
         e.name === "NotAllowedError"

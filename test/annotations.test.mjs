@@ -7,6 +7,7 @@ import {atomic,config,setCurrent,json} from '../src/store.mjs';
 import {start} from '../src/server.mjs';
 import {listAnnotations,saveAnnotation,validateAnnotation,sourceStamp} from '../src/annotations.mjs';
 import {fittedBox,shapePoints,linePoints,smoothNodes,drawingPath,mergeDrawings,frameKey} from '../web/markup-geometry.js';
+import {markedFrames} from '../web/markup-frames.js';
 const drawing={id:'stroke',type:'pen',color:'#F0E442',width:4,points:[[1,2],[20,30],[40,20]]};
 const record={schema:1,id:'frame-one',project:'demo',clip:{id:'demo:current',project:'demo',title:'Film',video:'/media/demo/film.mp4',fps:30,version:1},frame:60,fps:30,width:1000,height:562.5,drawings:[drawing],createdAt:'2026-10-11T00:00:00Z',updatedAt:'2026-10-11T00:00:00Z'};
 async function setup(t){const root=await mkdtemp(path.join(os.tmpdir(),'wip-markup-test-'));t.after(()=>rm(root,{recursive:true,force:true}));await mkdir(path.join(root,'content/demo/entries'),{recursive:true});await mkdir(path.join(root,'media'));await writeFile(path.join(root,'media/film.mp4'),'original frame');await atomic(path.join(root,'content/demo/project.json'),{id:'demo',title:'Film'});await atomic(path.join(root,'wip.json'),{content:'content',mounts:{demo:'media'}});const c=await config(path.join(root,'wip.json'));await setCurrent(c,'demo',record.clip);return {root,c};}
@@ -60,4 +61,22 @@ test('owner exports are explicit and rewrite media without private fingerprints'
  await exportStatic(c,{out,projects:['demo'],mediaBase:'https://media.example/',annotationIds:['frame-one']});
  const a=(await json(path.join(out,'annotations.json'))).records[0];assert.match(a.clip.video,/^https:\/\/media.example\/\w+\.mp4$/);assert.equal(a.sourceStamp,undefined);assert.equal(a.frame,60);
  await assert.rejects(exportStatic(c,{out,projects:['demo'],annotationIds:['missing']}),/Unknown annotation/);
+});
+
+test('marked frames are scoped to the playing clip and version, grouped by frame, in video order',()=>{
+ const later={...record,id:'later',frame:120},owner={...record,id:'owner',owner:true};
+ const others=[{...record,id:'empty',drawings:[]},{...record,id:'old-cut',clip:{...record.clip,version:0}},
+ {...record,id:'other-clip',clip:{...record.clip,video:'/media/demo/other.mp4'}},{...record,id:'other-project',clip:{...record.clip,project:'another'}}];
+ const frames=markedFrames([later,...others,owner,record],record.clip);
+ assert.deepEqual(frames.map(a=>a.frame),[60,120]);assert.deepEqual(frames[0].records.map(a=>a.id),['owner','frame-one']);
+ assert.deepEqual(markedFrames([record],null),[]);
+});
+test('removing every drawing persists an empty frame and undo can restore it with revision protection',async t=>{
+ const {c}=await setup(t),allowed=new Set([record.clip.video]);const saved=await saveAnnotation(c,record,0,allowed);
+ const removed=await saveAnnotation(c,{...saved,drawings:[]},saved.revision,allowed);
+ assert.deepEqual(markedFrames(await listAnnotations(c),record.clip),[]);
+ await assert.rejects(saveAnnotation(c,saved,saved.revision,allowed),/Revision conflict/);
+ const restored=await saveAnnotation(c,{...removed,drawings:saved.drawings},removed.revision,allowed);
+ assert.equal(markedFrames(await listAnnotations(c),record.clip).length,1);assert.deepEqual(restored.drawings,saved.drawings);
+ assert.deepEqual(mergeDrawings(record.drawings,[],record.drawings).drawings,[]);
 });

@@ -1,16 +1,17 @@
+import {markedFrames} from './markup-frames.js';
 import {MarkupStorage} from './markup-storage.js';
 import {clone,clipKey,frameKey,fittedBox,distance,shapePoints,linePoints,smoothNodes,drawingPath,translateDrawing,add,sub} from './markup-geometry.js';
 const NS='http://www.w3.org/2000/svg';
 const $=id=>document.getElementById(id);
 const el=(tag,attrs={},text)=>{const n=document.createElement(tag);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,v);if(text!=null)n.textContent=text;return n;};
 const svg=(tag,attrs={})=>{const n=document.createElementNS(NS,tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);return n;};
-const icons={pen:'M4 20l4-1L20 7l-3-3L5 16Z M14 7l3 3',select:'M5 3v17l5-5 4 7 3-2-4-7h8Z',shapes:'M3 3h12v12H3Z M15 9a6 6 0 1 1-6 6',undo:'M9 5 3 11l6 6 M3 11h11a6 6 0 0 1 6 6',redo:'m15 5 6 6-6 6 M21 11H10a6 6 0 0 0-6 6',trash:'M4 7h16 M9 7V4h6v3 M6 7l1 14h10l1-14 M10 10v7 M14 10v7',frames:'M3 5h14v11H3Z M7 20h14V9',close:'m6 6 12 12 M6 18 18 6',settings:'M4 7h16 M4 17h16 M9 4v6 M15 14v6',smooth:'M3 18C3 2 21 22 21 6',download:'M12 3v12 m-5-5 5 5 5-5 M4 17v4h16v-4'};
+const icons={more:'M5 12h.01 M12 12h.01 M19 12h.01',pen:'M4 20l4-1L20 7l-3-3L5 16Z M14 7l3 3',select:'M5 3v17l5-5 4 7 3-2-4-7h8Z',shapes:'M3 3h12v12H3Z M15 9a6 6 0 1 1-6 6',undo:'M9 5 3 11l6 6 M3 11h11a6 6 0 0 1 6 6',redo:'m15 5 6 6-6 6 M21 11H10a6 6 0 0 0-6 6',trash:'M4 7h16 M9 7V4h6v3 M6 7l1 14h10l1-14 M10 10v7 M14 10v7',frames:'M3 5h14v11H3Z M7 20h14V9',close:'m6 6 12 12 M6 18 18 6',settings:'M4 7h16 M4 17h16 M9 4v6 M15 14v6',smooth:'M3 18C3 2 21 22 21 6',download:'M12 3v12 m-5-5 5 5 5-5 M4 17v4h16v-4'};
 function button(name,icon,action){const b=el('button',{type:'button','aria-label':name,title:name,class:'markup-icon'});if(icon){const s=svg('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor','stroke-width':1.7,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':true});s.append(svg('path',{d:icons[icon]}));b.append(s);}else b.textContent=name;b.onclick=action;return b;}
 function download(blob,name){const a=el('a',{href:URL.createObjectURL(blob),download:name});a.click();setTimeout(()=>URL.revokeObjectURL(a.href),10000);}
 export class Markup {
   constructor(player,previewWindow,{base,staticMode,copyText}){
     this.player=player;this.window=previewWindow;this.static=staticMode;this.copyText=copyText;this.storage=new MarkupStorage(base,staticMode);
-    this.tool='pen';this.color='#F0E442';this.width=4;this.smooth=false;this.tolerance=2;this.editing=false;this.histories=new Map();this.selected=null;this.doc=null;this.key='';this.panelOpen=false;
+    this.tool='pen';this.color='#F0E442';this.width=4;this.smooth=false;this.tolerance=2;this.editing=false;this.histories=new Map();this.selected=null;this.doc=null;this.key='';this.panelOpen=false;this.removedFrames=[];
     this.preview=$('preview');this.video=$('video');this.build();
     this.storage.addEventListener('change',()=>{this.status.textContent=this.storage.status;this.renderList();if(!this.gesture)this.sync(true);});
     this.storage.ready.then(()=>this.sync(true));
@@ -58,22 +59,27 @@ export class Markup {
     this.hint=el('div',{id:'markup-hint'});this.preview.append(this.hint);
     this.snapshot=el('img',{id:'markup-snapshot',alt:'Saved marked frame'});this.snapshot.hidden=true;this.preview.insertBefore(this.snapshot,this.layer);
     this.panel=el('aside',{id:'markup-panel','aria-label':'Marked frames'});this.panel.hidden=true;
-    const heading=el('div',{class:'markup-heading'});heading.append(el('h2',{},'Marked frames'),button('Close marked frames','close',()=>this.openPanel(false)));this.panel.append(heading);
-    this.status=el('p',{class:'markup-status',role:'status'},this.storage.status);this.panel.append(this.status);
-    const actions=el('div',{class:'markup-actions'});this.copyButton=button('Copy frame reference',null,()=>this.copyReference());this.pngButton=button('Save image',null,()=>this.exportImage());actions.append(this.copyButton,this.pngButton);this.panel.append(actions);
+    const heading=el('div',{class:'markup-heading'});this.count=el('span',{class:'markup-count'});const title=el('h2',{},'Frames');title.append(this.count);
+    this.moreButton=button('Frame options','more',()=>this.popover(this.options,this.moreButton));this.moreButton.setAttribute('aria-expanded','false');
+    heading.append(title,this.moreButton,button('Close marked frames','close',()=>this.openPanel(false)));this.panel.append(heading);
+    this.clipLabel=el('p',{class:'markup-clip'});this.panel.append(this.clipLabel);
+    this.options=el('div',{class:'markup-popover markup-options',popover:'auto'});this.options.hidden=true;
+    const action=(name,fn)=>button(name,null,()=>{this.closePopovers();fn();});
+    this.copyButton=action('Copy frame reference',()=>this.copyReference());this.pngButton=action('Save frame image',()=>this.exportImage());this.options.append(this.copyButton,this.pngButton);
+    this.options.append(action('Download all drawings',()=>download(new Blob([JSON.stringify({schema:1,records:this.storage.records},null,2)],{type:'application/json'}),'wip-markup.json')));
+    this.options.append(action('Restore drawings',()=>this.importInput.click()));
+    this.importInput=el('input',{type:'file',accept:'.json,application/json',hidden:''});this.importInput.onchange=()=>this.restore();this.options.append(this.importInput);
+    if(!this.static)this.options.append(action('Retry saves',()=>this.storage.retry()));
+    this.options.append(el('small',{},this.static?'Your drawings stay in this browser. Owner drawings are read-only.':'Drawings save in your workspace.'));this.panel.append(this.options);
     this.list=el('div',{class:'markup-list'});this.panel.append(this.list);
-    const footer=el('div',{class:'markup-panel-footer'});
-    footer.append(button('Download backup',null,()=>download(new Blob([JSON.stringify({schema:1,records:this.storage.records},null,2)],{type:'application/json'}),'wip-markup.json')));
-    const restore=button('Restore backup',null,()=>this.importInput.click());footer.append(restore);
-    this.importInput=el('input',{type:'file',accept:'.json,application/json',hidden:''});this.importInput.onchange=()=>this.restore();footer.append(this.importInput);
-    if(!this.static)footer.append(button('Retry saves',null,()=>this.storage.retry()));
-    footer.append(el('small',{},this.static?'Owner drawings are published with the site. Your drawings stay on this device.':'Saved per frame, including older drafts. Agents can read the annotation JSON.'));this.panel.append(footer);document.body.append(this.panel);
+    this.notice=el('div',{class:'markup-notice',role:'status'});this.notice.hidden=true;this.noticeLabel=el('span');this.notice.append(this.noticeLabel,button('Undo frame deletion',null,()=>this.undoFrameRemoval()));this.notice.lastChild.textContent='Undo';this.panel.append(this.notice);
+    this.status=el('p',{class:'markup-status',role:'status'},this.storage.status);this.panel.append(this.status);document.body.append(this.panel);
     this.controls();
   }
-  closePopovers(){for(const [panel,b] of [[this.shapes,this.shapeButton],[this.settings,this.styleButton]]){panel.hidePopover?.();panel.hidden=true;b.setAttribute("aria-expanded","false");}}
+  closePopovers(){for(const [panel,b] of [[this.shapes,this.shapeButton],[this.settings,this.styleButton],[this.options,this.moreButton]]){panel.hidePopover?.();panel.hidden=true;b.setAttribute("aria-expanded","false");}}
   popover(panel,b){
     const open=panel.matches(":popover-open");this.closePopovers();if(open)return;panel.hidden=false;panel.showPopover?.();b.setAttribute("aria-expanded","true");
-    const anchor=b.getBoundingClientRect(),box=panel.getBoundingClientRect();Object.assign(panel.style,{position:"fixed",margin:"0",left:`${Math.max(8,Math.min(innerWidth-box.width-8,anchor.left))}px`,top:`${Math.max(8,anchor.top-box.height-10)}px`,bottom:"auto"});
+    const anchor=b.getBoundingClientRect(),box=panel.getBoundingClientRect();Object.assign(panel.style,{position:"fixed",margin:"0",left:`${Math.max(8,Math.min(innerWidth-box.width-8,anchor.left))}px`,top:`${Math.min(innerHeight-box.height-8,Math.max(8,anchor.top>=box.height+10?anchor.top-box.height-10:anchor.bottom+8))}px`,bottom:"auto"});
   }
   selectedDrawing(){return this.doc?.drawings.find(d=>d.id===this.selected);}
   frame(){return this.player.frame;}
@@ -81,7 +87,8 @@ export class Markup {
   available(){return !!this.player.track?.video&&!this.player.playing&&this.player.preview&&!this.video.seeking&&this.player.hasPicture&&this.video.readyState>=2&&!this.player.error&&!this.doc?.sourceChanged;}
   sync(force=false){
     if(this.gesture&&(this.player.playing||clipKey(this.player.track)!==clipKey(this.doc.clip)||this.frame()!==this.doc.frame))this.cancel();
-    const key=JSON.stringify([clipKey(this.player.track),this.frame(),this.player.fps]);
+    const clip=clipKey(this.player.track);if(clip!==this.listClip){this.listClip=clip;this.renderList();}
+    const key=JSON.stringify([clip,this.frame(),this.player.fps]);
     if(key!==this.key||force){
       this.key=key;
       const found=this.storage.records.find(a=>a.id===this.focusedId&&this.matching(a))||this.storage.records.find(a=>this.matching(a));
@@ -106,7 +113,7 @@ export class Markup {
   setTool(tool){this.tool=tool;this.selected=null;this.controls();this.render();}
   openPanel(on){this.panelOpen=on;this.panel.hidden=!on;this.dockButton.setAttribute('aria-expanded',String(on));document.body.classList.toggle('markup-open',on);this.layout();this.renderList();}
   layout(){
-    const mobile=innerWidth<=700;const inset=this.panelOpen?(mobile?0:260):0,bottom=this.panelOpen&&mobile?210:0;
+    const mobile=innerWidth<=700;const inset=this.panelOpen?(mobile?0:208):0,bottom=this.panelOpen&&mobile?176:0;
     document.documentElement.style.setProperty('--markup-side',`${inset}px`);document.documentElement.style.setProperty('--markup-bottom',`${bottom}px`);
     this.window.reserved={left:inset,bottom};this.window.layout();
     const v=this.video.getBoundingClientRect(),p=this.preview.getBoundingClientRect();
@@ -121,7 +128,7 @@ export class Markup {
     this.smoothButton.setAttribute('aria-pressed',String(this.selectedDrawing()?.smooth??this.smooth));
     const history=this.doc&&this.histories.get(this.doc.id);this.undoButton.disabled=!history?.undo.length;this.redoButton.disabled=!history?.redo.length;this.deleteButton.disabled=!this.selectedDrawing();
     for(const b of this.settings.querySelectorAll('[data-color]'))b.setAttribute('aria-pressed',String(b.dataset.color===this.color));
-    this.copyButton.disabled=!this.doc&&!this.owners?.length;this.pngButton.disabled=this.copyButton.disabled;
+    this.copyButton.disabled=!this.doc?.drawings.length&&!this.owners?.some(a=>a.drawings.length);this.pngButton.disabled=this.copyButton.disabled;
   }
   render(){
     this.layer.replaceChildren();const all=[...(this.owners||[]),...(this.doc?[this.doc]:[])];
@@ -198,25 +205,50 @@ export class Markup {
   keydown(e){
     if(!this.editing||e.target.closest('input,textarea,select')||e.target.isContentEditable)return;
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.stopPropagation();this.undo(e.shiftKey);return;}
-    if(e.key==='Escape'){if(this.shapes.matches(':popover-open')||this.settings.matches(':popover-open')){this.closePopovers();e.preventDefault();e.stopPropagation();return;}e.preventDefault();e.stopPropagation();if(this.gesture)this.cancel();else if(this.selected){this.selected=null;this.render();this.controls();}else this.setEditing(false);return;}
+    if(e.key==='Escape'){if(this.shapes.matches(':popover-open')||this.settings.matches(':popover-open')||this.options.matches(':popover-open')){this.closePopovers();e.preventDefault();e.stopPropagation();return;}e.preventDefault();e.stopPropagation();if(this.gesture)this.cancel();else if(this.selected){this.selected=null;this.render();this.controls();}else this.setEditing(false);return;}
     if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();e.stopPropagation();this.remove();return;}
     if(e.ctrlKey||e.metaKey||e.altKey)return;
     if(e.key.toLowerCase()==='v'||e.key.toLowerCase()==='b'){e.preventDefault();this.setTool(e.key.toLowerCase()==='v'?'select':'pen');}
     if(e.key===' '&&e.target===this.layer){e.preventDefault();this.player.toggle();}
   }
-  renderList(){
-    const focus=document.activeElement?.dataset.annotation;
-    this.list.replaceChildren();const records=[...this.storage.owners,...this.storage.records].filter(a=>a.drawings.length).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
-    this.dockButton.title=`Marked frames · ${records.length}`;
-    if(!records.length)this.list.append(el('p',{class:'markup-empty'},'Draw on a paused frame. It will appear here.'));
-    for(const a of records){const b=el('button',{type:'button',class:'markup-frame','data-annotation':a.id,'data-owner':String(!!a.owner)});const picture=el('div',{class:'markup-thumb'});
-      if(a.thumbnail)picture.append(el('img',{src:a.thumbnail,alt:'',loading:'lazy'}));
-      const overlay=svg('svg',{viewBox:`0 0 ${a.width} ${a.height}`,'aria-hidden':true});for(const d of a.drawings)overlay.append(svg('path',{d:drawingPath(d),fill:'none',stroke:d.color,'stroke-width':d.width,'stroke-linecap':'round','stroke-linejoin':'round'}));picture.append(overlay);
-      b.append(picture,el('span',{},`${a.clip.title}${a.clip.version!=null?` · v${a.clip.version}`:''}`),el('small',{},`Frame ${a.frame}${a.owner?' · Owner':this.static?' · Yours':''} · ${a.clip.projectTitle||a.project}`));b.onclick=()=>this.jump(a);this.list.append(b);
+  removeFrame(group){
+    const records=group.records.filter(a=>!a.owner);if(!records.length)return;
+    this.cancel();this.removedFrames.push(clone(records));if(this.removedFrames.length>20)this.removedFrames.shift();
+    for(const a of records){const current=this.storage.records.find(r=>r.id===a.id);if(!current)continue;
+      if(this.doc?.id===a.id){this.checkpoint(current.drawings);this.selected=null;}
+      this.storage.save({...clone(current),drawings:[],updatedAt:new Date().toISOString()},clone(current));
     }
-    this.highlightList();if(focus)this.list.querySelector(`[data-annotation="${CSS.escape(focus)}"]`)?.focus({preventScroll:true});
+    this.notice.hidden=false;this.noticeLabel.textContent=`Frame ${group.frame} removed`;
+    this.sync(true);this.renderList();this.notice.querySelector('button').focus({preventScroll:true});
   }
-  highlightList(){for(const b of this.list.querySelectorAll('[data-annotation]'))b.setAttribute('aria-current',String(b.dataset.annotation===this.doc?.id||this.owners?.some(a=>a.id===b.dataset.annotation)));}
+  undoFrameRemoval(){
+    const records=this.removedFrames.pop();if(!records)return;
+    for(const a of records){const current=this.storage.records.find(r=>r.id===a.id);if(!current)continue;
+      // Restore removed strokes without replacing any edits made since deletion.
+      const drawings=[...a.drawings.filter(d=>!current.drawings.some(r=>r.id===d.id)),...current.drawings];
+      this.storage.save({...clone(current),drawings,updatedAt:new Date().toISOString()},clone(current));
+    }
+    this.notice.hidden=!this.removedFrames.length;if(this.removedFrames.length)this.noticeLabel.textContent=`Frame ${this.removedFrames.at(-1)[0].frame} removed`;
+    this.jump(records[0]);this.renderList();this.list.querySelector(`[data-annotation="${CSS.escape(records[0].id)}"]`)?.focus({preventScroll:true});
+  }
+  renderList(){
+    const focus=document.activeElement?.dataset.annotation,scroll=this.list.scrollTop;
+    this.list.replaceChildren();const groups=markedFrames([...this.storage.owners,...this.storage.records],this.player.track);
+    this.count.textContent=groups.length?String(groups.length):'';this.dockButton.title=`Marked frames in this clip · ${groups.length}`;
+    this.clipLabel.textContent=this.player.track?.title||'Select a video';this.clipLabel.title=this.clipLabel.textContent;
+    if(!groups.length)this.list.append(el('p',{class:'markup-empty'},this.player.track?.video?'No marked frames in this clip. Draw on a paused frame to add one.':'Play a video to see its marked frames.'));
+    for(const group of groups){const editable=group.records.filter(a=>!a.owner),a=editable[0]||group.records[0],row=el('div',{class:'markup-row'});
+      const b=el('button',{type:'button',class:'markup-frame','data-annotation':a.id,'data-owner':String(!editable.length),'data-frame':a.frame,'data-fps':a.fps,'aria-label':`Go to frame ${a.frame}`});const picture=el('div',{class:'markup-thumb'});
+      const thumbnail=group.records.find(r=>r.thumbnail)?.thumbnail;if(thumbnail)picture.append(el('img',{src:thumbnail,alt:'',loading:'lazy'}));
+      const overlay=svg('svg',{viewBox:`0 0 ${a.width} ${a.height}`,'aria-hidden':true});for(const r of group.records)for(const d of r.drawings)overlay.append(svg('path',{d:drawingPath(d),fill:'none',stroke:d.color,'stroke-width':d.width,'stroke-linecap':'round','stroke-linejoin':'round'}));picture.append(overlay);
+      const seconds=a.frame/a.fps,time=`${Math.floor(seconds/60)}:${(seconds%60).toFixed(2).padStart(5,'0')}`;
+      b.append(picture,el('span',{},`Frame ${a.frame}`),el('small',{},`${time}${!editable.length?' · Owner':''}`));b.onclick=()=>this.jump(a);row.append(b);
+      if(editable.length){const remove=button(this.static?`Remove your drawings on frame ${a.frame}`:`Delete marked frame ${a.frame}`,'trash',()=>this.removeFrame(group));remove.classList.add('markup-remove-frame');row.append(remove);}
+      this.list.append(row);
+    }
+    this.highlightList();this.list.scrollTop=scroll;if(focus)this.list.querySelector(`[data-annotation="${CSS.escape(focus)}"]`)?.focus({preventScroll:true});
+  }
+  highlightList(){for(const b of this.list.querySelectorAll('[data-annotation]'))b.setAttribute('aria-current',String(+b.dataset.frame===this.frame()&&+b.dataset.fps===this.player.fps));}
   jump(a){this.focusedId=a.owner?null:a.id;this.cancel();this.player.pause();this.editing=false;this.preview.classList.remove('markup-editing');this.toggle.setAttribute('aria-pressed','false');
     if(clipKey(this.player.track)!==clipKey(a.clip))this.player.load(a.clip,{time:a.frame/a.fps+(a.clip.offset||0),autoplay:false,preview:true});
     else this.player.showPreview(true);

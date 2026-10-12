@@ -29,45 +29,61 @@
 .markup-colors .markup-icon { background:var(--swatch); border-radius:50%; width:20px!important; height:20px!important; box-shadow:0 0 0 1px #7774; }
 .markup-colors [aria-pressed=true] { outline:1px solid #fff; outline-offset:3px; }
 #markup-hint { position:absolute; top:46px; left:12px; right:12px; text-align:center; color:#ddd; font-size:10px; pointer-events:none; text-shadow:0 1px 4px #000,0 1px 4px #000; }
-#markup-panel { position:fixed; top:0; bottom:var(--dock); left:0; width:260px; z-index:23; background:#0c0c0cfb; padding:22px 18px 14px; display:flex; flex-direction:column; gap:12px; box-shadow:10px 0 35px #0002; }
+#markup-panel { position:fixed; top:0; bottom:var(--dock); left:0; width:208px; z-index:23; background:var(--bg,#0c0c0c); padding:24px 20px 14px; display:flex; flex-direction:column; gap:0; }
 #markup-panel[hidden] { display:none; }
-.markup-heading { display:flex; align-items:center; justify-content:space-between; }
-.markup-heading h2 { font-size:15px; font-weight:500; margin:0; }
-.markup-status { font-size:10px; color:var(--muted); min-height:26px; margin:0; line-height:1.5; }
-.markup-actions { display:flex; gap:14px; }
-.markup-actions .markup-icon,.markup-panel-footer .markup-icon { width:auto; height:auto; padding:0; font-size:10px; }
-.markup-list { overflow:auto; min-height:0; flex:1; overscroll-behavior:contain; }
-.markup-frame { display:block; text-align:left; padding:12px 0 16px; width:100%; color:var(--muted); }
+.markup-heading { display:flex; align-items:center; gap:2px; }
+.markup-heading h2 { flex:1; font-size:13px; font-weight:500; margin:0; }
+.markup-count { margin-left:8px; color:var(--faint); font-size:11px; font-weight:400; font-variant-numeric:tabular-nums; }
+.markup-heading .markup-icon { width:26px; height:26px; padding:4px; }
+.markup-heading .markup-icon svg { width:16px; height:16px; }
+.markup-clip { font-size:11px; line-height:1.5; color:var(--faint); margin:6px 0 22px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.markup-status { font-size:10px; color:var(--faint); margin:12px 0 0; line-height:1.5; overflow-wrap:anywhere; }
+.markup-options { display:flex; flex-direction:column; gap:8px; }
+.markup-options[hidden] { display:none; }
+.markup-options .markup-icon { width:auto; height:auto; padding:4px 0; justify-content:flex-start; font-size:12px; }
+.markup-list { overflow:auto; min-height:0; flex:1; overscroll-behavior:contain; scrollbar-width:thin; }
+.markup-row { position:relative; margin-bottom:22px; }
+.markup-frame { display:block; text-align:left; padding:0; width:100%; color:var(--muted); }
 .markup-frame:hover,.markup-frame[aria-current=true] { color:var(--ink); }
+.markup-frame > span { display:block; font-size:11px; margin-top:8px; padding-right:27px; line-height:1.4; font-variant-numeric:tabular-nums; }
 .markup-frame[aria-current=true] > span { text-decoration:underline; text-underline-offset:4px; }
-.markup-frame > span { display:block; font-size:12px; margin-top:7px; line-height:1.4; }
-.markup-frame > small { display:block; font-size:10px; color:var(--faint); margin-top:4px; line-height:1.5; }
-.markup-thumb { position:relative; aspect-ratio:16/9; background:#000; }
+.markup-frame > small { display:block; font-size:10px; color:var(--faint); margin-top:3px; line-height:1.5; font-variant-numeric:tabular-nums; }
+.markup-thumb { position:relative; aspect-ratio:16/9; overflow:hidden; }
 .markup-thumb img,.markup-thumb svg { position:absolute; width:100%; height:100%; object-fit:contain; }
-.markup-empty { font-size:12px; line-height:1.6; margin-top:25px; color:var(--faint); }
-.markup-panel-footer { display:flex; flex-wrap:wrap; gap:12px; }
-.markup-panel-footer small { display:block; flex-basis:100%; color:var(--faint); font-size:10px; line-height:1.5; }
+.markup-thumb img { opacity:.75; transition:opacity .18s; }
+.markup-frame:is(:hover,:focus-visible,[aria-current=true]) .markup-thumb img { opacity:1; }
+.markup-remove-frame { position:absolute; right:0; bottom:12px; width:26px; height:26px; opacity:0; }
+.markup-remove-frame svg { width:15px; height:15px; }
+.markup-row:is(:hover,:focus-within) .markup-remove-frame { opacity:1; }
+.markup-empty { font-size:11px; line-height:1.7; margin:0; color:var(--faint); }
+.markup-notice { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:10px; color:var(--muted); padding-top:10px; }
+.markup-notice[hidden] { display:none; }
+.markup-notice .markup-icon { width:auto; height:26px; padding:0; font-size:11px; color:var(--ink); }
 #preview.theatre #video,#preview:fullscreen #video { margin-left:var(--markup-side); width:calc(100% - var(--markup-side)); height:calc(100% - var(--markup-bottom)); }
 #preview:is(.theatre,:fullscreen) .markup-toggle,#preview:is(.theatre,:fullscreen) #markup-toolbar { left:calc(var(--markup-side) + 12px); bottom:calc(var(--markup-bottom) + 12px); }
 #preview:fullscreen #markup-toolbar,#preview:fullscreen .markup-toggle { bottom:calc(var(--dock) + var(--markup-bottom) + 12px); }
 #preview:is(.theatre,:fullscreen) #markup-hint { left:calc(var(--markup-side) + 12px); }
 #preview.theatre .preview-label { left:var(--markup-side); }
 @media(max-width:700px) {
- #markup-panel { top:auto; height:210px; width:100%; padding:10px 14px; gap:6px; }
- .markup-heading h2 { font-size:13px; }
- .markup-status { min-height:0; position:absolute; top:18px; left:130px; right:48px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
- .markup-list { display:flex; gap:15px; }
- .markup-frame { width:140px; flex-shrink:0; padding:0; }
- .markup-frame > span { font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
- .markup-frame > small { font-size:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
- .markup-thumb { height:67px; }
- .markup-panel-footer small { display:none; }
+ #markup-panel { top:auto; height:176px; width:100%; padding:8px 14px; gap:0; }
+ .markup-heading { height:25px; }
+ .markup-heading h2 { font-size:12px; }
+ .markup-clip { position:absolute; left:100px; right:78px; top:10px; margin:0; font-size:10px; }
+ .markup-list { display:flex; gap:16px; padding-top:7px; }
+ .markup-row { width:112px; flex-shrink:0; margin:0; }
+ .markup-frame > span { font-size:10px; margin-top:5px; }
+ .markup-frame > small { font-size:9px; margin-top:1px; }
+ .markup-remove-frame { width:24px; height:24px; bottom:8px; opacity:1; }
+ .markup-status { margin:4px 0 0; font-size:9px; line-height:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+ .markup-notice { position:absolute; left:14px; bottom:4px; right:14px; padding:0; background:var(--bg,#0c0c0c); }
+ .markup-notice:not([hidden]) + .markup-status { visibility:hidden; }
+ .markup-notice .markup-icon { height:18px; }
  #markup-toolbar { gap:0; padding:2px; max-width:calc(100% - 44px); left:4px; }
  #markup-toolbar .markup-icon { width:24px; height:27px; padding:4px; }
  #markup-hint { top:40px; font-size:9px; }
 }
-@media(hover:none) { .markup-toggle { opacity:1; } }
-@media(prefers-reduced-motion:reduce) { .markup-icon { transition:none; } }
+@media(hover:none) { .markup-toggle,.markup-remove-frame { opacity:1; } }
+@media(prefers-reduced-motion:reduce) { .markup-icon,.markup-thumb img { transition:none; } }
 
 @media(min-width:701px) {
  body.markup-open main { width:calc(100% - var(--markup-side)); margin-left:calc(var(--markup-side) + max(0px,(100vw - var(--markup-side) - 1120px)/2)); margin-right:0; }

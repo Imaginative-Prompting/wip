@@ -109,3 +109,17 @@ test("frame references for song-clock excerpts are relative to the clip", (t) =>
   player.showPreview(true);
   assert.equal(player.frame, 24);
 });
+
+
+test("pausing to annotate during a pending play request does not block drawing with an error", async (t) => {
+  const { player, audio } = setup(t);
+  let reject;
+  audio.play = () => new Promise((_, fail) => { reject = fail; });
+  const playback = player.play();
+  player.pause();
+  reject(new DOMException("Interrupted by pause", "AbortError"));
+  await playback;
+  assert.equal(player.playing, false);
+  assert.equal(player.error, "");
+  assert.equal(player.hasPicture, true);
+});

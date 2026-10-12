@@ -135,8 +135,9 @@ The hosted collection is public and can be explored without signing in.
 
 Draw directly on a paused video frame. Keep rough strokes or turn them into editable
 Bézier curves; add constrained shapes and arrows. Marked frames stay attached to
-their original clips in a thumbnail sidebar, with workspace saves, browser recovery,
-and image export. Public sites show published owner drawings while visitors keep
+their original clips in a minimal, clip-specific frame list. Remove a whole marked
+frame with one click and undo it if needed. Workspace saves, browser recovery,
+and image export keep review notes accessible. Public sites show published owner drawings while visitors keep
 private sketches in their own browsers. [Markup guide](docs/markup.md).
 
 ![Example curve markup on a frame from The Way I Look At You, with editable handles and the marked-frame sidebar](docs/images/wip-markup.png)

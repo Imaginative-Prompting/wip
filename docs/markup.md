@@ -2,7 +2,10 @@
 
 Hover over the video and choose the pencil. Playback pauses on the displayed
 frame and **Marked frames** opens beside the picture. The bottom bar's marked-frame
-button reopens the list at any time. Select a thumbnail to reopen that exact clip,
+button reopens the list at any time. The compact list shows only the playing clip
+and version, in frame order. Owner and personal drawings on the same frame share
+one thumbnail. Hover a frame and choose its trash icon to remove all your drawings
+on it; **Undo** restores them. Published owner drawings remain read-only. Select a thumbnail to reopen that exact clip,
 version and zero-based frame; changing the current cut does not move old markup.
 Drawings hide during playback and on other frames.
 
@@ -24,8 +27,9 @@ Drawings hide during playback and on other frames.
   Escape cancels a gesture, clears selection, then leaves drawing mode. B returns
   to freehand. Frame-step controls still work while drawing.
 
+Open the **Frame options** (•••) menu for backup, restore and export.
 Use **Copy frame reference** to paste the clip, frame, FPS and annotation reference
-into an agent conversation. **Save image** downloads the frame with its drawings.
+into an agent conversation. **Save frame image** downloads the frame with its drawings.
 Mini-player resizing, corner snapping, theatre and true fullscreen all preserve
 alignment, including portrait footage with letterboxing.
 
@@ -58,8 +62,12 @@ Saving first keeps a recovery copy in IndexedDB, then writes the workspace file
 atomically. A failed server save remains in an outbox; **Retry saves** sends it
 again. Independent concurrent drawing edits merge. Conflicting edits retain both
 strokes and show a notice rather than silently dropping either person's work.
-**Download backup** / **Restore backup** also work across browsers. Storage errors
+**Download all drawings** / **Restore drawings** also work across browsers. Storage errors
 are shown; do not close a tab reporting “Not saved” before exporting a backup.
+
+Removing a frame saves an empty drawing list with revision checks, so a delayed
+write cannot silently resurrect the old drawing. Empty records are hidden from
+the frame list; the file remains available for revision-safe undo.
 
 Markup keeps references to old media and does not duplicate entire video files.
 Keep draft media at immutable URLs. Local size/mtime fingerprints detect when a
