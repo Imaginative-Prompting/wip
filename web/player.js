@@ -19,6 +19,7 @@ export class Player extends EventTarget {
     this.video = video;
     this.track = null;
     this.playing = false;
+    this.waiting = false;
     this.preview = false;
     this.repeat = true;
     this.quality = "720";
@@ -47,7 +48,20 @@ export class Player extends EventTarget {
         }
       });
       m.addEventListener("canplay", () => {
-        if (this.playing && m === video && this.preview) this.syncVideo(true);
+        if (this.playing && m === video && this.preview) this.syncVideo();
+      });
+      for (const event of ["waiting", "seeking"]) m.addEventListener(event, () => {
+        if (m !== this.master || !this.playing || this.tail) return;
+        this.waiting = true;
+        if (this.track?.audio) video.pause();
+      });
+      m.addEventListener("playing", () => {
+        if (m !== this.master) return;
+        this.waiting = false;
+        if (this.playing && this.track?.audio) this.syncVideo();
+      });
+      m.addEventListener("pause", () => {
+        if (m === audio && this.track?.audio && this.playing && !this.tail) video.pause();
       });
     }
     video.addEventListener("loadeddata", () => {
@@ -123,6 +137,7 @@ export class Player extends EventTarget {
     this.audio.pause();
     this.video.pause();
     this.playing = false;
+    this.waiting = false;
     this.tail = null;
     this.stepping = false;
     this.error = "";
@@ -295,10 +310,21 @@ export class Player extends EventTarget {
       this.video.readyState < 1
     )
       return;
-    const t = videoPosition(this.track, this.time);
+    // A held audio clock must hold the picture too, not replay a short segment
+    // every time drift correction pulls a still-running video back to it.
+    if (this.playing && !this.tail &&
+        (this.waiting || this.audio.paused || this.audio.seeking || this.audio.readyState < 3)) {
+      this.video.pause();
+      return;
+    }
+    // Never cancel a decode with another seek from a canplay/timer callback.
+    if (this.video.seeking) return;
+    const clock = this.playing && !this.tail ? this.audio.currentTime : this.time;
+    const t = videoPosition(this.track, clock);
     if (
       t < 0 ||
-      (Number.isFinite(this.video.duration) && t >= this.video.duration)
+      (Number.isFinite(this.video.duration) &&
+        (t >= this.video.duration || (this.video.ended && t >= this.video.duration - 0.18)))
     ) {
       this.video.pause();
       return;

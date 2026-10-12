@@ -123,3 +123,60 @@ test("pausing to annotate during a pending play request does not block drawing w
   assert.equal(player.error, "");
   assert.equal(player.hasPicture, true);
 });
+
+
+test("a stalled soundtrack holds the picture instead of repeatedly replaying a few frames", (t) => {
+  const { player, audio, video } = setup(t);
+  player.playing = true;player.time = 5;audio.time = 5;video.time = 5;
+  audio.paused = false;video.paused = false;audio.readyState = video.readyState = 4;
+  audio.dispatchEvent(new Event("waiting"));
+  assert.equal(video.paused, true);
+  video.seeks.length = 0;
+  for (let i = 0; i < 10; i++) { player.tick(); video.dispatchEvent(new Event("canplay")); }
+  assert.deepEqual(video.seeks, []);
+  assert.equal(video.paused, true);
+  audio.time = 5.2;audio.dispatchEvent(new Event("playing"));
+  assert.equal(video.paused, false);
+  assert.equal(video.currentTime, 5.2);
+});
+
+test("video synchronization reads the live audio clock without replacing an in-progress seek", (t) => {
+  const { player, audio, video } = setup(t);
+  player.playing = true;player.time = 5;audio.time = 5.14;video.time = 5.14;
+  audio.paused = false;audio.readyState = video.readyState = 4;
+  video.seeks.length = 0;video.dispatchEvent(new Event("canplay"));
+  assert.deepEqual(video.seeks, []); // Cached player.time is from the previous tick.
+  video.seeking = true;video.time = 4;audio.time = 5.4;player.syncVideo(true);
+  assert.deepEqual(video.seeks, []); // Let the requested frame finish decoding.
+  video.seeking = false;video.readyState = 4;player.syncVideo();
+  assert.equal(video.currentTime, 5.4);
+});
+
+test("a paused or seeking soundtrack cannot repeatedly restart its preview", (t) => {
+  const { player, audio, video } = setup(t);
+  player.playing = true;player.time = 5;audio.time = 5;video.time = 5.2;
+  audio.readyState = video.readyState = 4;video.paused = false;
+  video.seeks.length = 0;player.syncVideo();
+  assert.equal(video.paused, true);assert.deepEqual(video.seeks, []);
+  audio.paused = false;audio.seeking = true;player.syncVideo();
+  assert.equal(video.paused, true);assert.deepEqual(video.seeks, []);
+});
+
+test("a finished preview holds its final picture until the soundtrack loops", (t) => {
+  const { player, audio, video } = setup(t);
+  player.playing = true;player.time = 11.9;audio.time = 11.9;video.time = 12;
+  audio.paused = false;audio.readyState = video.readyState = 4;video.ended = true;
+  video.seeks.length = 0;player.syncVideo();
+  assert.equal(video.paused, true);assert.deepEqual(video.seeks, []);
+  audio.time = 0;player.syncVideo();
+  assert.equal(video.currentTime, 0);assert.equal(video.paused, false);
+});
+
+test("the intentional silent film tail still plays after the soundtrack ends", (t) => {
+  const { player, audio, video } = setup(t);
+  player.track.duration = 14;video.duration = 14;
+  audio.time = audio.duration;audio.paused = true;video.time = 12;
+  audio.readyState = video.readyState = 4;player.playing = true;
+  player.ended(audio);player.syncVideo();
+  assert.ok(player.tail);assert.equal(video.paused, false);
+});
