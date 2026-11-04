@@ -159,4 +159,4 @@ Built with JavaScript, Node.js, and browser media APIs. Markdown is rendered wit
 [DOMPurify](https://github.com/cure53/DOMPurify).
 
 Built and maintained by [Imaginative Prompting](https://github.com/Imaginative-Prompting).
-This repository does not currently include a license.
+Released under the [MIT License](LICENSE).
